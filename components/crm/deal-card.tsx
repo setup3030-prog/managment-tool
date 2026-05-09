@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { PipelineDeal } from "@/types";
 import { cn } from "@/lib/utils";
+import { useData } from "@/context/data-context";
 
 interface DealCardProps {
   deal: PipelineDeal;
@@ -17,6 +18,8 @@ const probabilityColor = (p: number) =>
   p >= 75 ? "text-emerald-400" : p >= 40 ? "text-amber-400" : "text-muted-foreground";
 
 export function DealCard({ deal, index }: DealCardProps) {
+  const { customers } = useData();
+  const customer = customers.find(c => c.id === deal.customerId);
   return (
     <Draggable draggableId={deal.id} index={index}>
       {(provided, snapshot) => (
@@ -32,7 +35,7 @@ export function DealCard({ deal, index }: DealCardProps) {
           <Link href={`/crm/${deal.customerId}`} onClick={(e) => snapshot.isDragging && e.preventDefault()}>
             <div className="space-y-2">
               <p className="text-sm font-semibold leading-tight line-clamp-2">{deal.title}</p>
-              <p className="text-xs text-muted-foreground">{deal.customer?.flag} {deal.customer?.name}</p>
+              <p className="text-xs text-muted-foreground">{customer?.flag} {customer?.name}</p>
 
               {deal.value && (
                 <p className="text-sm font-bold text-indigo-400">
@@ -55,10 +58,10 @@ export function DealCard({ deal, index }: DealCardProps) {
                 )}
               </div>
 
-              {deal.assignedTo && (
+              {deal.ownerId && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <User size={11} />
-                  {deal.assignedTo}
+                  {deal.ownerId}
                 </div>
               )}
             </div>

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
-  LayoutDashboard, Wrench, Settings2, DollarSign,
+  LayoutDashboard, Wrench, DollarSign,
   AlertTriangle, FileBarChart, Settings,
   ChevronLeft, ChevronRight, LogOut, User, Users2,
   Factory, Target,
