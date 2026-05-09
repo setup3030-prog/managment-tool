@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { PipelineDeal } from "@/types";
 import { cn } from "@/lib/utils";
-import { useData } from "@/context/data-context";
+import { CUSTOMERS } from "@/data/seed-data";
 
 interface DealCardProps {
   deal: PipelineDeal;
@@ -18,8 +18,7 @@ const probabilityColor = (p: number) =>
   p >= 75 ? "text-emerald-400" : p >= 40 ? "text-amber-400" : "text-muted-foreground";
 
 export function DealCard({ deal, index }: DealCardProps) {
-  const { customers } = useData();
-  const customer = customers.find(c => c.id === deal.customerId);
+  const customer = CUSTOMERS.find(c => c.id === deal.customerId);
   return (
     <Draggable draggableId={deal.id} index={index}>
       {(provided, snapshot) => (
