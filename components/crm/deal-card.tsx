@@ -34,7 +34,7 @@ export function DealCard({ deal, index }: DealCardProps) {
           <Link href={`/crm/${deal.customerId}`} onClick={(e) => snapshot.isDragging && e.preventDefault()}>
             <div className="space-y-2">
               <p className="text-sm font-semibold leading-tight line-clamp-2">{deal.title}</p>
-              <p className="text-xs text-muted-foreground">{customer?.flag} {customer?.name}</p>
+              <p className="text-xs text-muted-foreground">{customer?.country} {customer?.name}</p>
 
               {deal.value && (
                 <p className="text-sm font-bold text-indigo-400">
