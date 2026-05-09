@@ -40,7 +40,7 @@ export function KanbanBoard() {
             stage={stage}
             label={label}
             color={color}
-            deals={deals.filter((d) => d.stage === stage).sort((a, b) => a.position - b.position)}
+            deals={deals.filter((d) => d.stage === stage)}
           />
         ))}
       </div>
