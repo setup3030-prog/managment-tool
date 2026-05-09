@@ -5,10 +5,10 @@ import { KPI_SNAPSHOTS } from "@/data/seed-data";
 
 const data = KPI_SNAPSHOTS.slice(-8).map((k) => ({
   month: k.month.slice(5, 7) + "/" + k.month.slice(2, 4),
-  Won: k.rfqsWon ?? 0,
-  Lost: k.rfqsLost ?? 0,
-  "Win Rate": k.rfqsWon && k.rfqsLost !== undefined
-    ? Math.round((k.rfqsWon / ((k.rfqsWon ?? 0) + (k.rfqsLost ?? 0))) * 100)
+  Won: k.rfqWon ?? 0,
+  Lost: k.rfqLost ?? 0,
+  "Win Rate": k.rfqWon && k.rfqLost !== undefined
+    ? Math.round((k.rfqWon / ((k.rfqWon ?? 0) + (k.rfqLost ?? 0))) * 100)
     : 0,
 }));
 

@@ -11,25 +11,23 @@ interface KpiCardProps {
 }
 
 export function KpiCard({ data, index = 0 }: KpiCardProps) {
-  const { title, value, trend, trendPositive, trafficLight, icon, sparklineData, subtitle } = data;
+  const { label: title, value, trend, status: trafficLight, sparkline: sparklineData, subtitle } = data;
 
   const trendColor =
     trend === undefined ? "" :
-    trend > 0
-      ? trendPositive !== false ? "text-emerald-400" : "text-red-400"
-      : trendPositive !== false ? "text-red-400" : "text-emerald-400";
+    trend > 0 ? "text-emerald-400" : "text-red-400";
 
   const TrendIcon = trend === undefined ? Minus : trend > 0 ? TrendingUp : TrendingDown;
 
-  const sparkData = sparklineData?.map((v, i) => ({ v }));
+  const sparkData = sparklineData?.map((v) => ({ v }));
 
   const dotColor =
-    trafficLight === "green" ? "bg-emerald-500" :
-    trafficLight === "yellow" ? "bg-amber-400" : "bg-red-500";
+    trafficLight === "GREEN" ? "bg-emerald-500" :
+    trafficLight === "YELLOW" ? "bg-amber-400" : "bg-red-500";
 
   const lineColor =
-    trafficLight === "green" ? "#10b981" :
-    trafficLight === "yellow" ? "#f59e0b" : "#ef4444";
+    trafficLight === "GREEN" ? "#10b981" :
+    trafficLight === "YELLOW" ? "#f59e0b" : "#ef4444";
 
   return (
     <motion.div
@@ -42,7 +40,7 @@ export function KpiCard({ data, index = 0 }: KpiCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={cn("w-2 h-2 rounded-full shrink-0", dotColor, trafficLight === "green" ? "animate-pulse" : "")} />
+          <div className={cn("w-2 h-2 rounded-full shrink-0", dotColor, trafficLight === "GREEN" ? "animate-pulse" : "")} />
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
         </div>
         {sparkData && (

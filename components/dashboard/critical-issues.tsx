@@ -43,7 +43,7 @@ export function CriticalIssues() {
             <div className="flex items-start gap-3 rounded-lg px-3 py-2.5 hover:bg-accent transition-colors">
               <Badge variant={priorityVariant[claim.priority]} className="shrink-0 mt-0.5">{claim.priority}</Badge>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium leading-tight line-clamp-2">{claim.title}</p>
+                <p className="text-sm font-medium leading-tight line-clamp-2">{claim.description}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{claim.customer?.name}</p>
               </div>
               {claim.value ? (

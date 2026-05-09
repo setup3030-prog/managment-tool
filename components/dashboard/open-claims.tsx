@@ -9,7 +9,7 @@ const ENRICHED_CLAIMS = getEnrichedClaims();
 
 const openClaims = ENRICHED_CLAIMS
   .filter((c) => ["OPEN", "IN_PROGRESS"].includes(c.status))
-  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  .sort((a, b) => new Date(b.openDate).getTime() - new Date(a.openDate).getTime());
 
 const priorityVariant: Record<Priority, "danger" | "warning" | "info" | "secondary"> = {
   CRITICAL: "danger", HIGH: "warning", MEDIUM: "info", LOW: "secondary",
@@ -44,8 +44,8 @@ export function OpenClaims() {
                 <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-accent transition-colors">
                   <Badge variant={priorityVariant[claim.priority]} className="shrink-0">{claim.priority.slice(0, 4)}</Badge>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{claim.title}</p>
-                    <p className="text-xs text-muted-foreground">{claim.customer?.name} · {formatDate(claim.createdAt)}</p>
+                    <p className="text-sm font-medium truncate">{claim.description}</p>
+                    <p className="text-xs text-muted-foreground">{claim.customer?.name} · {formatDate(claim.openDate)}</p>
                   </div>
                   <div className="text-right shrink-0">
                     {claim.value ? (

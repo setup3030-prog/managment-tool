@@ -56,33 +56,33 @@ export function trafficLight(
   inverted = false
 ): TrafficLight {
   if (inverted) {
-    if (value <= greenMin) return "green";
-    if (value <= yellowMin) return "yellow";
-    return "red";
+    if (value <= greenMin) return "GREEN";
+    if (value <= yellowMin) return "YELLOW";
+    return "RED";
   }
-  if (value >= greenMin) return "green";
-  if (value >= yellowMin) return "yellow";
-  return "red";
+  if (value >= greenMin) return "GREEN";
+  if (value >= yellowMin) return "YELLOW";
+  return "RED";
 }
 
 export function trafficLightColor(light: TrafficLight): string {
   switch (light) {
-    case "green":
+    case "GREEN":
       return "bg-emerald-500";
-    case "yellow":
+    case "YELLOW":
       return "bg-amber-400";
-    case "red":
+    case "RED":
       return "bg-red-500";
   }
 }
 
 export function trafficLightText(light: TrafficLight): string {
   switch (light) {
-    case "green":
+    case "GREEN":
       return "text-emerald-400";
-    case "yellow":
+    case "YELLOW":
       return "text-amber-400";
-    case "red":
+    case "RED":
       return "text-red-400";
   }
 }

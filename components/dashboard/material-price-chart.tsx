@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MATERIALS } from "@/data/seed-data";
 
 const COLORS = ["#6366f1", "#10b981", "#f59e0b", "#3b82f6", "#ec4899"];
-const MONTHS = MATERIALS[0].priceTrend.slice(-8).map((p) => p.month.slice(5, 7) + "/" + p.month.slice(2, 4));
+const MONTHS = MATERIALS[0].priceHistory.slice(-8).map((p) => p.month.slice(5, 7) + "/" + p.month.slice(2, 4));
 
 const data = MONTHS.map((month, i) => {
   const entry: Record<string, string | number> = { month };
   MATERIALS.forEach((mat) => {
-    entry[mat.name] = mat.priceTrend.slice(-8)[i]?.price ?? 0;
+    entry[mat.name] = mat.priceHistory.slice(-8)[i]?.price ?? 0;
   });
   return entry;
 });
