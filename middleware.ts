@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PROTECTED = [
-  "/dashboard", "/tooling", "/injection", "/financial",
-  "/sales", "/risks", "/reports", "/settings",
-  "/rfq", "/crm",
+  "/dashboard", "/tooling", "/injection", "/sales",
+  "/financial", "/risks", "/reports", "/settings",
+  "/crm", "/org-chart",
 ];
 
 export function middleware(request: NextRequest) {

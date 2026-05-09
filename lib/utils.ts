@@ -15,7 +15,7 @@ export function formatCurrency(
     return new Intl.NumberFormat("de-DE", {
       style: "currency",
       currency,
-      maximumFractionDigits: 1,
+      maximumFractionDigits: 0,
       notation: "compact",
     }).format(value);
   }
@@ -30,8 +30,8 @@ export function formatCurrency(
   return new Intl.NumberFormat("de-DE", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value);
 }
 

@@ -1,9 +1,5 @@
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-export type RfqStatus =
-  | "NEW" | "COSTING" | "WAITING_FOR_SUPPLIER" | "SENT"
-  | "NEGOTIATION" | "WON" | "LOST";
-
 export type ClaimStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type DealStage = "LEAD" | "QUALIFIED" | "PROPOSAL" | "NEGOTIATION" | "WON" | "LOST";
@@ -90,52 +86,6 @@ export interface Machine {
   status: "RUNNING" | "IDLE" | "MAINTENANCE" | "BREAKDOWN";
 }
 
-// ─── Injection ────────────────────────────────────────────────────────────────
-
-export type InjectionSegment = "AUTOMOTIVE" | "INDUSTRIAL" | "HVAC" | "MEDICAL";
-
-export interface InjectionPart {
-  id: string;
-  partNo: string;
-  description: string;
-  customer: string;
-  segment: InjectionSegment;
-  annualVolume: number;
-  monthlyVolume: number;
-  unitPrice: number;
-  materialCode: string;
-  materialCostPerKg: number;
-  partWeightKg: number;
-  machineTons: number;
-  cycleTimeSec: number;
-  oee: number;
-  scrapPct: number;
-  laborCostPerPart: number;
-  machineCostPerPart: number;
-  materialCostPerPart: number;
-  totalCostPerPart: number;
-  marginPct: number;
-  annualRevenue: number;
-  annualGrossProfit: number;
-  status: "ACTIVE" | "RAMPING" | "NEW" | "EOL" | "ON_HOLD";
-  lastPriceUpdate: string;
-  nextPriceReview: string;
-}
-
-export interface InjectionRFQ {
-  id: string;
-  customer: string;
-  partName: string;
-  segment: InjectionSegment;
-  annualVolume: number;
-  quotedUnitPrice: number;
-  targetMarginPct: number;
-  status: RfqStatus;
-  submittedDate: string;
-  decisionDate?: string;
-  annualRevenuePotential: number;
-}
-
 // ─── Financial ───────────────────────────────────────────────────────────────
 
 export interface FinancialPeriod {
@@ -146,11 +96,6 @@ export interface FinancialPeriod {
   toolingGMPct: number;
   toolingEBITDA: number;
   toolingEBITDAPct: number;
-  injectionRevenue: number;
-  injectionGP: number;
-  injectionGMPct: number;
-  injectionEBITDA: number;
-  injectionEBITDAPct: number;
   revenue: number;
   grossProfit: number;
   gmPct: number;
@@ -174,7 +119,7 @@ export interface CashFlowItem {
   amount: number;
   dueDate: string;
   type: "INFLOW" | "OUTFLOW";
-  status: "PLANNED" | "CONFIRMED" | "OVERDUE";
+  status: "PLANNED" | "CONFIRMED" | "OVERDUE" | "ISSUED";
   daysOverdue?: number;
   category: string;
 }
@@ -224,24 +169,6 @@ export interface Customer {
   annualRevenue?: number;
   creditLimit?: number;
   paymentTerms?: number;
-}
-
-export interface Rfq {
-  id: string;
-  customerId: string;
-  partName: string;
-  annualVolume?: number;
-  materialCode?: string;
-  status: RfqStatus;
-  quotedPrice?: number;
-  targetMargin?: number;
-  submittedDate?: string;
-  decisionDate?: string;
-  notes?: string;
-  ownerId?: string;
-  value?: number;
-  service?: ToolingServiceType;
-  type?: "TOOLING" | "INJECTION";
 }
 
 export interface Claim {
@@ -301,6 +228,22 @@ export interface UserProfile {
   department?: string;
 }
 
+// ─── Org Chart ────────────────────────────────────────────────────────────────
+
+export type OrgDepartment = "Management" | "Technical" | "Design" | "Sales" | "Finance" | "Quality";
+
+export interface OrgEmployee {
+  id: string;
+  name: string;
+  position: string;
+  department: OrgDepartment;
+  email: string;
+  phone?: string;
+  reportsTo?: string;
+  role: UserRole;
+  hireYear?: number;
+}
+
 export interface AppSettings {
   companyName: string;
   currency: string;
@@ -320,35 +263,96 @@ export interface AppSettings {
   notifyOnLowMargin: boolean;
 }
 
-export interface RfqCalculatorInputs {
-  annualVolume: number;
-  partWeightKg: number;
-  materialPricePerKg: number;
-  scrapAllowancePct: number;
+// ─── Injection Moulding ──────────────────────────────────────────────────────
+
+export type InjectionMaterial = "PP" | "PP+GF30" | "PA66" | "PA6" | "ABS" | "PC" | "POM" | "PBT" | "PE" | "TPE";
+export type InjectionPartStatus = "ACTIVE" | "NPI" | "PHASE_OUT" | "OBSOLETE";
+export type ProductionOrderStatus = "PLANNED" | "RUNNING" | "COMPLETED" | "ON_HOLD" | "CANCELLED";
+
+export interface InjectionPart {
+  id: string;
+  partNo: string;
+  description: string;
+  customerId: string;
+  material: InjectionMaterial;
+  weightGrams: number;
   cycleTimeSec: number;
-  machineTons: number;
-  machineRatePerHour: number;
-  laborRatePerHour: number;
   cavities: number;
-  toolingAmortizationCost: number;
-  sgaOverheadPct: number;
+  annualVolume: number;
+  pricePerPiece: number;
+  materialCostPerPiece: number;
+  status: InjectionPartStatus;
+  pressId: string;
+  launchDate: string;
+  toolNo?: string;
+}
+
+export interface ProductionOrder {
+  id: string;
+  orderNo: string;
+  partId: string;
+  pressId: string;
+  plannedQty: number;
+  actualQty: number;
+  scrapQty: number;
+  plannedStart: string;
+  plannedEnd: string;
+  actualEnd?: string;
+  status: ProductionOrderStatus;
+  oee: number;
+  shift: "A" | "B" | "C" | "N";
+}
+
+export interface InjectionPress {
+  id: string;
+  name: string;
+  tonnage: number;
+  status: "RUNNING" | "IDLE" | "MAINTENANCE" | "BREAKDOWN";
+  currentPartId?: string;
+  utilizationPct: number;
+  oee: number;
+  plannedHours: number;
+  actualHours: number;
+}
+
+// ─── RFQ / Sales ─────────────────────────────────────────────────────────────
+
+export type RfqStatus = "DRAFT" | "COSTING" | "SENT" | "WON" | "LOST" | "CANCELLED";
+
+export interface RfqCostCalc {
+  material: InjectionMaterial;
+  materialCostPerKg: number;
+  weightGrams: number;
+  cycleTimeSec: number;
+  cavities: number;
+  annualVolume: number;
+  machineRatePerHr: number;
+  laborRatePerHr: number;
+  scrapPct: number;
+  packagingCostPerPart: number;
+  logisticsCostPerPart: number;
+  sgaPct: number;
   targetMarginPct: number;
 }
 
-export interface RfqCalculatorResult {
-  materialCostPerPart: number;
-  machineCostPerPart: number;
-  laborCostPerPart: number;
-  directCostPerPart: number;
-  toolingPerPart: number;
-  totalVariableCost: number;
-  sgaCost: number;
-  totalCostPerPart: number;
-  salesPrice: number;
-  annualRevenue: number;
-  annualProfit: number;
-  breakevenQuantity: number;
+export interface RFQ {
+  id: string;
+  rfqNo: string;
+  customerId: string;
+  description: string;
+  status: RfqStatus;
+  requestDate: string;
+  dueDate: string;
+  sentDate?: string;
+  decisionDate?: string;
+  toolingValue: number;
+  serialValuePA: number;
+  estimatedToolingCost: number;
   marginPct: number;
+  lostReason?: string;
+  notes?: string;
+  partsCount: number;
+  costCalc?: RfqCostCalc;
 }
 
 export interface SalesReportRow {

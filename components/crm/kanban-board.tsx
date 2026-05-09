@@ -9,9 +9,8 @@ import { toast } from "sonner";
 
 const STAGES: { stage: DealStage; label: string; color: string }[] = [
   { stage: "LEAD", label: "Lead", color: "bg-slate-400" },
-  { stage: "OPPORTUNITY", label: "Opportunity", color: "bg-blue-400" },
-  { stage: "RFQ", label: "RFQ", color: "bg-indigo-400" },
-  { stage: "QUOTATION_SENT", label: "Quotation Sent", color: "bg-purple-400" },
+  { stage: "QUALIFIED", label: "Qualified", color: "bg-blue-400" },
+  { stage: "PROPOSAL", label: "Proposal", color: "bg-indigo-400" },
   { stage: "NEGOTIATION", label: "Negotiation", color: "bg-amber-400" },
   { stage: "WON", label: "Won", color: "bg-emerald-500" },
   { stage: "LOST", label: "Lost", color: "bg-red-500" },

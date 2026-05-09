@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn, formatCurrency, formatPct } from "@/lib/utils";
 import {
-  WARRANTY_CLAIMS, MACHINES, FINANCIAL_PERIODS, RFQS,
+  WARRANTY_CLAIMS, MACHINES, FINANCIAL_PERIODS, PIPELINE_DEALS, getCustomerById,
 } from "@/data/seed-data";
 import { useData } from "@/context/data-context";
+import { useSort, SortHead } from "@/hooks/use-sort";
 import { ProjectForm } from "@/components/forms/project-form";
 import { CashFlowForm } from "@/components/forms/cashflow-form";
 import type { ToolingProject, ToolingServiceType } from "@/types";
@@ -108,15 +109,14 @@ export default function ToolingBusinessPage() {
   }
   function handleAddNew() { setEditProject(undefined); setFormOpen(true); }
 
-  // Sales KPIs
-  const toolingRfqs = RFQS.filter(r => r.type === "TOOLING");
-  const wonRfqs = toolingRfqs.filter(r => r.status === "WON");
-  const lostRfqs = toolingRfqs.filter(r => r.status === "LOST");
-  const sentRfqs = toolingRfqs.filter(r => r.status === "SENT" || r.status === "NEGOTIATION");
-  const wonValue = wonRfqs.reduce((s, r) => s + (r.value ?? 0), 0);
-  const totalQuotedValue = toolingRfqs.reduce((s, r) => s + (r.value ?? 0), 0);
-  const winRate = toolingRfqs.filter(r => r.status === "WON" || r.status === "LOST").length > 0
-    ? (wonRfqs.length / (wonRfqs.length + lostRfqs.length)) * 100 : 0;
+  // Sales KPIs (from CRM pipeline)
+  const wonDeals = PIPELINE_DEALS.filter(d => d.stage === "WON");
+  const lostDeals = PIPELINE_DEALS.filter(d => d.stage === "LOST");
+  const openDeals = PIPELINE_DEALS.filter(d => !["WON", "LOST"].includes(d.stage));
+  const wonValue = wonDeals.reduce((s, d) => s + d.value, 0);
+  const totalPipelineValue = openDeals.reduce((s, d) => s + d.value, 0);
+  const winRate = (wonDeals.length + lostDeals.length) > 0
+    ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100 : 0;
 
   // Service type breakdown
   const serviceBreakdown = Object.entries(SERVICE_LABELS).map(([type, label]) => {
@@ -154,6 +154,52 @@ export default function ToolingBusinessPage() {
 
   // WIP total
   const totalWip = TOOLING_PROJECTS.reduce((s, p) => s + p.wip, 0);
+
+  const dealSort = useSort();
+  const projectSort = useSort();
+  const warrantySort = useSort();
+  const cashSort = useSort();
+
+  const RISK_ORDER: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  const sortedDeals = dealSort.apply(openDeals, {
+    Customer: d => getCustomerById(d.customerId)?.shortName ?? d.customerId,
+    Deal: d => d.title,
+    Value: d => d.value,
+    Probability: d => d.probability,
+    Stage: d => d.stage,
+    "Close Date": d => d.expectedClose,
+  });
+  const sortedProjects = projectSort.apply(
+    TOOLING_PROJECTS.filter(p => p.status !== "CANCELLED"), {
+      "Tool No": p => p.toolNo,
+      Customer: p => p.customer,
+      "Service Type": p => p.serviceType,
+      Quoted: p => p.quotedRevenue,
+      EFC: p => p.estimatedFinalCost,
+      "Margin%": p => p.quotedRevenue > 0 ? (p.quotedRevenue - p.estimatedFinalCost) / p.quotedRevenue * 100 : -100,
+      Complete: p => p.completionPct,
+      ETA: p => p.eta,
+      Risk: p => RISK_ORDER[p.riskLevel] ?? 4,
+    }
+  );
+  const sortedWarranty = warrantySort.apply(WARRANTY_CLAIMS, {
+    "Tool No": w => w.toolNo,
+    Customer: w => w.customer,
+    Description: w => w.description,
+    "Root Cause": w => w.rootCause ?? "",
+    Cost: w => w.cost,
+    Recovered: w => w.recovered,
+    Recoverable: w => (w.recoverable ? 1 : 0),
+    Status: w => w.status,
+  });
+  const sortedCash = cashSort.apply(CASH_FLOW_ITEMS, {
+    Description: i => i.description,
+    Customer: i => i.customer,
+    "Due Date": i => i.dueDate,
+    Amount: i => Math.abs(i.amount),
+    Type: i => i.type,
+    Status: i => i.status,
+  });
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
@@ -197,10 +243,10 @@ export default function ToolingBusinessPage() {
         {/* ── A: SALES ── */}
         <TabsContent value="sales" className="space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KpiTile label="Pipeline Value" value={formatCurrency(totalQuotedValue)} sub="Total RFQ value" color="indigo" />
-            <KpiTile label="Won Value YTD" value={formatCurrency(wonValue)} sub={`${wonRfqs.length} orders`} color="green" />
-            <KpiTile label="Win Rate" value={`${winRate.toFixed(1)}%`} sub={`${wonRfqs.length}W / ${lostRfqs.length}L`} color={winRate >= 60 ? "green" : "amber"} />
-            <KpiTile label="Open Quotations" value={`${sentRfqs.length}`} sub="Awaiting decision" color="default" />
+            <KpiTile label="Pipeline Value" value={formatCurrency(totalPipelineValue)} sub="Open opportunities" color="indigo" />
+            <KpiTile label="Won Value YTD" value={formatCurrency(wonValue)} sub={`${wonDeals.length} deals`} color="green" />
+            <KpiTile label="Win Rate" value={`${winRate.toFixed(1)}%`} sub={`${wonDeals.length}W / ${lostDeals.length}L`} color={winRate >= 60 ? "green" : "amber"} />
+            <KpiTile label="Open Deals" value={`${openDeals.length}`} sub="In progress" color="default" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -245,32 +291,29 @@ export default function ToolingBusinessPage() {
             </div>
           </div>
 
-          {/* RFQ Pipeline Table */}
+          {/* CRM Pipeline Table */}
           <div className="rounded-xl border border-border bg-card p-5">
-            <p className="text-sm font-semibold mb-4">Open RFQ Pipeline</p>
+            <p className="text-sm font-semibold mb-4">Open Deal Pipeline</p>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border">
-                    {["Customer", "Part / Service", "Type", "Value", "Status"].map(h => (
-                      <th key={h} className="text-left py-2 px-3 text-muted-foreground font-medium">{h}</th>
+                    {(["Customer", "Deal", "Value", "Probability", "Stage", "Close Date"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={dealSort} className="text-left py-2 px-3 text-muted-foreground font-medium" />
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {RFQS.filter(r => !["WON", "LOST"].includes(r.status)).map(r => (
-                    <tr key={r.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
-                      <td className="py-2 px-3 font-medium">{r.customerId.replace("c", "Customer ")}</td>
-                      <td className="py-2 px-3 text-muted-foreground">{r.partName}</td>
+                  {sortedDeals.map(d => (
+                    <tr key={d.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="py-2 px-3 font-medium">{getCustomerById(d.customerId)?.shortName ?? d.customerId}</td>
+                      <td className="py-2 px-3 text-muted-foreground">{d.title}</td>
+                      <td className="py-2 px-3 font-semibold">{formatCurrency(d.value)}</td>
+                      <td className="py-2 px-3 tabular-nums">{d.probability}%</td>
                       <td className="py-2 px-3">
-                        <span className="bg-indigo-500/10 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full">
-                          {SERVICE_LABELS[r.service ?? "NEW_TOOL"]}
-                        </span>
+                        <Badge variant="outline" className="text-[10px]">{d.stage}</Badge>
                       </td>
-                      <td className="py-2 px-3 font-semibold">{r.value ? formatCurrency(r.value) : "—"}</td>
-                      <td className="py-2 px-3">
-                        <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
-                      </td>
+                      <td className="py-2 px-3 text-muted-foreground">{d.expectedClose}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -297,13 +340,14 @@ export default function ToolingBusinessPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/20">
-                    {["Tool No", "Customer", "Service Type", "Quoted", "EFC", "Margin%", "Complete", "ETA", "Risk", ""].map(h => (
-                      <th key={h} className="text-left py-2.5 px-3 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
+                    {(["Tool No", "Customer", "Service Type", "Quoted", "EFC", "Margin%", "Complete", "ETA", "Risk"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={projectSort} className="text-left py-2.5 px-3 text-muted-foreground font-medium" />
                     ))}
+                    <th className="py-2.5 px-3 w-20" />
                   </tr>
                 </thead>
                 <tbody>
-                  {TOOLING_PROJECTS.filter(p => p.status !== "CANCELLED").map(p => {
+                  {sortedProjects.map(p => {
                     const margin = p.quotedRevenue > 0
                       ? ((p.quotedRevenue - p.estimatedFinalCost) / p.quotedRevenue) * 100 : -100;
                     const isOver = p.estimatedFinalCost > p.quotedRevenue;
@@ -450,13 +494,13 @@ export default function ToolingBusinessPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/20">
-                    {["Tool No", "Customer", "Description", "Root Cause", "Cost", "Recovered", "Recoverable", "Status"].map(h => (
-                      <th key={h} className="text-left py-2.5 px-3 text-muted-foreground font-medium">{h}</th>
+                    {(["Tool No", "Customer", "Description", "Root Cause", "Cost", "Recovered", "Recoverable", "Status"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={warrantySort} className="text-left py-2.5 px-3 text-muted-foreground font-medium" />
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {WARRANTY_CLAIMS.map(w => {
+                  {sortedWarranty.map(w => {
                     const statusCol: Record<string, string> = {
                       OPEN: "bg-rose-500/10 text-rose-400",
                       IN_REPAIR: "bg-amber-500/10 text-amber-400",
@@ -552,13 +596,14 @@ export default function ToolingBusinessPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/20">
-                    {["Description", "Customer", "Due Date", "Amount", "Type", "Status", ""].map(h => (
-                      <th key={h} className="text-left py-2.5 px-3 text-muted-foreground font-medium">{h}</th>
+                    {(["Description", "Customer", "Due Date", "Amount", "Type", "Status"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={cashSort} className="text-left py-2.5 px-3 text-muted-foreground font-medium" />
                     ))}
+                    <th className="py-2.5 px-3 w-8" />
                   </tr>
                 </thead>
                 <tbody>
-                  {CASH_FLOW_ITEMS.sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map(item => {
+                  {sortedCash.map(item => {
                     const statusCol: Record<string, string> = {
                       OVERDUE: "bg-rose-500/10 text-rose-400",
                       CONFIRMED: "bg-emerald-500/10 text-emerald-400",

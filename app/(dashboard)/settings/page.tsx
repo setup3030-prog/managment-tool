@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useSort, SortHead } from "@/hooks/use-sort";
 import { Save, Loader2, Settings, Shield, Bell, Users2, Sliders, RotateCcw } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,14 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({ ...APP_SETTINGS });
   const [saving, setSaving] = useState(false);
   const { resetToSeedData } = useData();
+
+  const userSort = useSort();
+  const sortedUsers = userSort.apply(USERS, {
+    Name: u => u.name,
+    Email: u => u.email,
+    Role: u => u.role,
+    Department: u => u.department ?? "",
+  });
 
   async function handleSave() {
     setSaving(true);
@@ -270,13 +279,14 @@ export default function SettingsPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  {["Name", "Email", "Role", "Department", "Status"].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-muted-foreground font-medium">{h}</th>
+                  {(["Name", "Email", "Role", "Department"] as const).map(h => (
+                    <SortHead key={h} label={h} sort={userSort} className="text-left py-2.5 px-4 text-muted-foreground font-medium" />
                   ))}
+                  <th className="text-left py-2.5 px-4 text-muted-foreground font-medium">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {USERS.map(u => (
+                {sortedUsers.map(u => (
                   <tr key={u.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">

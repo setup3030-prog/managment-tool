@@ -7,11 +7,11 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, AlertTriangle, DollarSign, Wrench,
-  FlaskConical, X, ArrowRight, Clock, CheckCircle, XCircle,
+  X, ArrowRight, Clock,
 } from "lucide-react";
 import { cn, formatCurrency, formatPct } from "@/lib/utils";
 import {
-  FINANCIAL_PERIODS, TOOLING_PROJECTS, INJECTION_PARTS,
+  FINANCIAL_PERIODS, TOOLING_PROJECTS,
   CEO_ALERTS, CASH_FLOW_ITEMS, RISK_ACTIONS,
 } from "@/data/seed-data";
 
@@ -26,7 +26,6 @@ function delta(cur: number, prv: number) {
 
 const CHART_COLORS = {
   tooling: "#6366f1",
-  injection: "#10b981",
   ebitda: "#f59e0b",
   cash: "#06b6d4",
   won: "#10b981",
@@ -74,19 +73,6 @@ function KpiCard({
   );
 }
 
-function SectionTitle({ label, sub }: { label: string; sub?: string }) {
-  return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="h-px flex-1 bg-border" />
-      <div className="text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-        {sub && <p className="text-[10px] text-muted-foreground/60">{sub}</p>}
-      </div>
-      <div className="h-px flex-1 bg-border" />
-    </div>
-  );
-}
-
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
@@ -116,8 +102,6 @@ export default function ExecutiveSummaryPage() {
 
   const activeProjects = TOOLING_PROJECTS.filter(p => p.status === "ACTIVE");
   const highRiskProjects = activeProjects.filter(p => p.riskLevel === "HIGH" || p.riskLevel === "CRITICAL");
-  const avgOEE = (INJECTION_PARTS.reduce((s, p) => s + p.oee, 0) / INJECTION_PARTS.length).toFixed(1);
-  const injRevMTD = CURRENT.injectionRevenue;
   const toolRevMTD = CURRENT.toolingRevenue;
 
   // Derived KPIs
@@ -126,12 +110,10 @@ export default function ExecutiveSummaryPage() {
   const ytdEBITDA = ytd2026.reduce((s, p) => s + p.ebitda, 0);
   const ytdGP = ytd2026.reduce((s, p) => s + p.grossProfit, 0);
   const ytdGMPct = ytdRevenue > 0 ? (ytdGP / ytdRevenue) * 100 : 0;
-  const ytdEBITDAPct = ytdRevenue > 0 ? (ytdEBITDA / ytdRevenue) * 100 : 0;
 
   const revenueChartData = MONTHS_24.map(p => ({
     name: p.label,
     Tooling: p.toolingRevenue,
-    Injection: p.injectionRevenue,
     "EBITDA%": p.ebitdaPct,
   }));
 
@@ -149,7 +131,6 @@ export default function ExecutiveSummaryPage() {
   const marginData = MONTHS_12.map(p => ({
     name: p.label,
     "Tooling GM%": p.toolingGMPct,
-    "Injection GM%": p.injectionGMPct,
     "EBITDA%": p.ebitdaPct,
   }));
 
@@ -195,80 +176,43 @@ export default function ExecutiveSummaryPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <KpiCard label="Revenue MTD" value={formatCurrency(CURRENT.revenue)} trend={delta(CURRENT.revenue, PREV.revenue)} subtitle="Apr 2026" color="indigo" icon={DollarSign} />
         <KpiCard label="Revenue YTD" value={formatCurrency(ytdRevenue)} subtitle="Jan–Apr vs target" color="indigo" />
-        <KpiCard label="Gross Margin" value={formatPct(CURRENT.gmPct)} trend={delta(CURRENT.gmPct, PREV.gmPct)} subtitle="Consolidated" color="emerald" />
-        <KpiCard label="EBITDA%" value={formatPct(CURRENT.ebitdaPct)} trend={delta(CURRENT.ebitdaPct, PREV.ebitdaPct)} subtitle="YTD avg: " color="amber" />
+        <KpiCard label="Gross Margin" value={formatPct(CURRENT.gmPct)} trend={delta(CURRENT.gmPct, PREV.gmPct)} subtitle="Tooling" color="emerald" />
+        <KpiCard label="EBITDA%" value={formatPct(CURRENT.ebitdaPct)} trend={delta(CURRENT.ebitdaPct, PREV.ebitdaPct)} subtitle="YTD avg" color="amber" />
         <KpiCard label="Cash Balance" value={formatCurrency(CURRENT.cashBalance)} trend={delta(CURRENT.cashBalance, PREV.cashBalance)} color="cyan" />
         <KpiCard label="AR Overdue" value={formatCurrency(Math.abs(overdueTotal))} subtitle={`${overdueItems.length} invoices`} color="rose" icon={AlertTriangle} />
       </div>
 
-      {/* ── Business Split ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Tooling */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center">
-              <Wrench className="w-3.5 h-3.5 text-indigo-400" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Tooling Business</p>
-              <p className="text-xs text-muted-foreground">Project-based revenue</p>
-            </div>
+      {/* ── Tooling Business KPIs ── */}
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center">
+            <Wrench className="w-3.5 h-3.5 text-indigo-400" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: "Revenue MTD", value: formatCurrency(toolRevMTD), trend: delta(CURRENT.toolingRevenue, PREV.toolingRevenue) },
-              { label: "Gross Margin", value: formatPct(CURRENT.toolingGMPct), trend: delta(CURRENT.toolingGMPct, PREV.toolingGMPct) },
-              { label: "EBITDA%", value: formatPct(CURRENT.toolingEBITDAPct), trend: delta(CURRENT.toolingEBITDAPct, PREV.toolingEBITDAPct) },
-              { label: "Active Projects", value: `${activeProjects.length}`, sub: `${highRiskProjects.length} high risk` },
-            ].map(k => (
-              <div key={k.label} className="bg-indigo-500/5 border border-indigo-500/10 rounded-lg p-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{k.label}</p>
-                <p className="text-lg font-bold mt-1">{k.value}</p>
-                {k.trend !== undefined ? (
-                  <span className={cn("text-xs flex items-center gap-0.5 mt-0.5", k.trend >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                    {k.trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {k.trend >= 0 ? "+" : ""}{k.trend.toFixed(1)}% MoM
-                  </span>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-0.5">{k.sub}</p>
-                )}
-              </div>
-            ))}
+          <div>
+            <p className="text-sm font-semibold">Tooling Business</p>
+            <p className="text-xs text-muted-foreground">Project-based revenue</p>
           </div>
         </div>
-
-        {/* Injection */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
-              <FlaskConical className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Revenue MTD", value: formatCurrency(toolRevMTD), trend: delta(CURRENT.toolingRevenue, PREV.toolingRevenue) },
+            { label: "Gross Margin", value: formatPct(CURRENT.toolingGMPct), trend: delta(CURRENT.toolingGMPct, PREV.toolingGMPct) },
+            { label: "EBITDA%", value: formatPct(CURRENT.toolingEBITDAPct), trend: delta(CURRENT.toolingEBITDAPct, PREV.toolingEBITDAPct) },
+            { label: "Active Projects", value: `${activeProjects.length}`, sub: `${highRiskProjects.length} high risk` },
+          ].map(k => (
+            <div key={k.label} className="bg-indigo-500/5 border border-indigo-500/10 rounded-lg p-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{k.label}</p>
+              <p className="text-lg font-bold mt-1">{k.value}</p>
+              {k.trend !== undefined ? (
+                <span className={cn("text-xs flex items-center gap-0.5 mt-0.5", k.trend >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                  {k.trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {k.trend >= 0 ? "+" : ""}{k.trend.toFixed(1)}% MoM
+                </span>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-0.5">{k.sub}</p>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-semibold">Injection Molding</p>
-              <p className="text-xs text-muted-foreground">Serial production revenue</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: "Revenue MTD", value: formatCurrency(injRevMTD), trend: delta(CURRENT.injectionRevenue, PREV.injectionRevenue) },
-              { label: "Gross Margin", value: formatPct(CURRENT.injectionGMPct), trend: delta(CURRENT.injectionGMPct, PREV.injectionGMPct) },
-              { label: "Avg OEE", value: `${avgOEE}%`, sub: "18 active parts" },
-              { label: "EBITDA%", value: formatPct(CURRENT.injectionEBITDAPct), trend: delta(CURRENT.injectionEBITDAPct, PREV.injectionEBITDAPct) },
-            ].map(k => (
-              <div key={k.label} className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-3">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{k.label}</p>
-                <p className="text-lg font-bold mt-1">{k.value}</p>
-                {k.trend !== undefined ? (
-                  <span className={cn("text-xs flex items-center gap-0.5 mt-0.5", k.trend >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                    {k.trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {k.trend >= 0 ? "+" : ""}{k.trend.toFixed(1)}% MoM
-                  </span>
-                ) : (
-                  <p className="text-xs text-muted-foreground mt-0.5">{k.sub}</p>
-                )}
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
@@ -277,7 +221,7 @@ export default function ExecutiveSummaryPage() {
         {/* Revenue + EBITDA Trend */}
         <div className="xl:col-span-2 rounded-xl border border-border bg-card p-5">
           <p className="text-sm font-semibold mb-1">Revenue & EBITDA Trend</p>
-          <p className="text-xs text-muted-foreground mb-4">24-month · Tooling + Injection · EBITDA % overlay</p>
+          <p className="text-xs text-muted-foreground mb-4">24-month · Tooling Revenue · EBITDA % overlay</p>
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={revenueChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -289,8 +233,7 @@ export default function ExecutiveSummaryPage() {
                 tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} domain={[0, 30]} />
               <RTooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar yAxisId="left" dataKey="Tooling" stackId="a" fill={CHART_COLORS.tooling} radius={[0, 0, 0, 0]} opacity={0.9} />
-              <Bar yAxisId="left" dataKey="Injection" stackId="a" fill={CHART_COLORS.injection} radius={[3, 3, 0, 0]} opacity={0.9} />
+              <Bar yAxisId="left" dataKey="Tooling" fill={CHART_COLORS.tooling} radius={[3, 3, 0, 0]} opacity={0.9} />
               <Line yAxisId="right" type="monotone" dataKey="EBITDA%" stroke={CHART_COLORS.ebitda} strokeWidth={2} dot={false} />
             </ComposedChart>
           </ResponsiveContainer>
@@ -321,10 +264,10 @@ export default function ExecutiveSummaryPage() {
 
       {/* ── Charts Row 2 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* RFQ Win/Loss */}
+        {/* Quote Win/Loss */}
         <div className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm font-semibold mb-1">RFQ Win/Loss Trend</p>
-          <p className="text-xs text-muted-foreground mb-4">12-month · tooling & injection combined</p>
+          <p className="text-sm font-semibold mb-1">Quote Win/Loss Trend</p>
+          <p className="text-xs text-muted-foreground mb-4">12-month · tooling project quotes</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={rfqData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -341,7 +284,7 @@ export default function ExecutiveSummaryPage() {
         {/* Margin Trend */}
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-sm font-semibold mb-1">Margin Trend</p>
-          <p className="text-xs text-muted-foreground mb-4">12-month · GM% by business line + EBITDA%</p>
+          <p className="text-xs text-muted-foreground mb-4">12-month · GM% + EBITDA%</p>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={marginData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -350,7 +293,6 @@ export default function ExecutiveSummaryPage() {
               <RTooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="Tooling GM%" stroke={CHART_COLORS.tooling} strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="Injection GM%" stroke={CHART_COLORS.injection} strokeWidth={2} dot={false} />
               <Line type="monotone" dataKey="EBITDA%" stroke={CHART_COLORS.ebitda} strokeWidth={2} dot={false} strokeDasharray="4 2" />
             </LineChart>
           </ResponsiveContainer>

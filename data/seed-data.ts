@@ -1,8 +1,8 @@
 import type {
-  Customer, Rfq, Claim, PipelineDeal, Material, KpiSnapshot,
+  Customer, Claim, PipelineDeal, Material, KpiSnapshot,
   UserProfile, AppSettings, ToolingProject, WarrantyClaim, Machine,
-  InjectionPart, InjectionRFQ, FinancialPeriod, CashFlowItem,
-  RiskAction, CeoAlert,
+  FinancialPeriod, CashFlowItem, RiskAction, CeoAlert, OrgEmployee,
+  InjectionPart, InjectionPress, ProductionOrder, RFQ,
 } from "@/types";
 
 // ─── Customers ────────────────────────────────────────────────────────────────
@@ -333,195 +333,52 @@ export const MACHINES: Machine[] = [
   { id: "m8", name: "Chevalier FSG-1224AD – Surface Grinder", type: "GRINDER", utilizationPct: 45, plannedHours: 300, actualHours: 135, efficiency: 89, status: "IDLE" },
 ];
 
-// ─── Injection Parts ──────────────────────────────────────────────────────────
-
-export const INJECTION_PARTS: InjectionPart[] = [
-  { id: "ip1", partNo: "BM-VG-001", description: "Ventilation Grille Front", customer: "BMW AG",
-    segment: "AUTOMOTIVE", annualVolume: 120000, monthlyVolume: 10000,
-    unitPrice: 1.85, materialCode: "PP", materialCostPerKg: 1.45, partWeightKg: 0.085,
-    machineTons: 350, cycleTimeSec: 38, oee: 87, scrapPct: 1.8,
-    laborCostPerPart: 0.042, machineCostPerPart: 0.312, materialCostPerPart: 0.123,
-    totalCostPerPart: 1.51, marginPct: 18.4, annualRevenue: 222000, annualGrossProfit: 40848,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip2", partNo: "BM-CH-002", description: "Cable Holder Set A+B", customer: "BMW AG",
-    segment: "AUTOMOTIVE", annualVolume: 480000, monthlyVolume: 40000,
-    unitPrice: 0.42, materialCode: "PP", materialCostPerKg: 1.45, partWeightKg: 0.018,
-    machineTons: 180, cycleTimeSec: 22, oee: 91, scrapPct: 1.2,
-    laborCostPerPart: 0.015, machineCostPerPart: 0.082, materialCostPerPart: 0.026,
-    totalCostPerPart: 0.338, marginPct: 19.5, annualRevenue: 201600, annualGrossProfit: 39312,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip3", partNo: "BO-EB-003", description: "ECU Bracket Housing", customer: "Robert Bosch GmbH",
-    segment: "AUTOMOTIVE", annualVolume: 95000, monthlyVolume: 7917,
-    unitPrice: 2.10, materialCode: "PA6", materialCostPerKg: 2.85, partWeightKg: 0.065,
-    machineTons: 350, cycleTimeSec: 42, oee: 84, scrapPct: 2.1,
-    laborCostPerPart: 0.055, machineCostPerPart: 0.385, materialCostPerPart: 0.185,
-    totalCostPerPart: 1.72, marginPct: 18.1, annualRevenue: 199500, annualGrossProfit: 36110,
-    status: "ACTIVE", lastPriceUpdate: "2025-04-01", nextPriceReview: "2026-04-01" },
-  { id: "ip4", partNo: "CO-SC-004", description: "Sensor Clip – ABS System", customer: "Continental AG",
-    segment: "AUTOMOTIVE", annualVolume: 240000, monthlyVolume: 20000,
-    unitPrice: 0.78, materialCode: "PA6", materialCostPerKg: 2.85, partWeightKg: 0.022,
-    machineTons: 250, cycleTimeSec: 28, oee: 89, scrapPct: 1.5,
-    laborCostPerPart: 0.020, machineCostPerPart: 0.138, materialCostPerPart: 0.063,
-    totalCostPerPart: 0.624, marginPct: 20.0, annualRevenue: 187200, annualGrossProfit: 37440,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip5", partNo: "VA-MC-005", description: "Mirror Control Switch Body", customer: "Valeo Systems",
-    segment: "AUTOMOTIVE", annualVolume: 85000, monthlyVolume: 7083,
-    unitPrice: 3.20, materialCode: "ABS", materialCostPerKg: 1.95, partWeightKg: 0.095,
-    machineTons: 350, cycleTimeSec: 48, oee: 82, scrapPct: 2.8,
-    laborCostPerPart: 0.068, machineCostPerPart: 0.452, materialCostPerPart: 0.185,
-    totalCostPerPart: 2.58, marginPct: 19.4, annualRevenue: 272000, annualGrossProfit: 52750,
-    status: "ACTIVE", lastPriceUpdate: "2025-07-01", nextPriceReview: "2026-07-01" },
-  { id: "ip6", partNo: "MA-BH-006", description: "Body Side Bracket – Light Duty", customer: "Magna International",
-    segment: "AUTOMOTIVE", annualVolume: 180000, monthlyVolume: 15000,
-    unitPrice: 1.12, materialCode: "PP", materialCostPerKg: 1.45, partWeightKg: 0.048,
-    machineTons: 250, cycleTimeSec: 30, oee: 88, scrapPct: 1.9,
-    laborCostPerPart: 0.025, machineCostPerPart: 0.158, materialCostPerPart: 0.070,
-    totalCostPerPart: 0.885, marginPct: 21.0, annualRevenue: 201600, annualGrossProfit: 42336,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip7", partNo: "FA-AI-007", description: "Armrest Insert Cover", customer: "Faurecia SE",
-    segment: "AUTOMOTIVE", annualVolume: 72000, monthlyVolume: 6000,
-    unitPrice: 4.85, materialCode: "ABS", materialCostPerKg: 1.95, partWeightKg: 0.142,
-    machineTons: 500, cycleTimeSec: 58, oee: 81, scrapPct: 2.5,
-    laborCostPerPart: 0.098, machineCostPerPart: 0.682, materialCostPerPart: 0.277,
-    totalCostPerPart: 3.95, marginPct: 18.6, annualRevenue: 349200, annualGrossProfit: 64951,
-    status: "ACTIVE", lastPriceUpdate: "2025-10-01", nextPriceReview: "2026-10-01" },
-  { id: "ip8", partNo: "ZF-GS-008", description: "Gearbox Seal Cap", customer: "ZF Friedrichshafen",
-    segment: "AUTOMOTIVE", annualVolume: 96000, monthlyVolume: 8000,
-    unitPrice: 1.65, materialCode: "POM", materialCostPerKg: 2.20, partWeightKg: 0.038,
-    machineTons: 180, cycleTimeSec: 26, oee: 90, scrapPct: 1.0,
-    laborCostPerPart: 0.018, machineCostPerPart: 0.095, materialCostPerPart: 0.084,
-    totalCostPerPart: 1.312, marginPct: 20.5, annualRevenue: 158400, annualGrossProfit: 32472,
-    status: "ACTIVE", lastPriceUpdate: "2025-04-01", nextPriceReview: "2026-04-01" },
-  { id: "ip9", partNo: "ST-DT-009", description: "Door Trim Clip Δ-12", customer: "Stellantis NV",
-    segment: "AUTOMOTIVE", annualVolume: 384000, monthlyVolume: 32000,
-    unitPrice: 0.28, materialCode: "PP", materialCostPerKg: 1.45, partWeightKg: 0.009,
-    machineTons: 180, cycleTimeSec: 18, oee: 92, scrapPct: 0.8,
-    laborCostPerPart: 0.008, machineCostPerPart: 0.045, materialCostPerPart: 0.013,
-    totalCostPerPart: 0.224, marginPct: 20.0, annualRevenue: 107520, annualGrossProfit: 21504,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip10", partNo: "HE-LG-010", description: "Light Guide Housing Outer", customer: "Hella GmbH",
-    segment: "AUTOMOTIVE", annualVolume: 60000, monthlyVolume: 5000,
-    unitPrice: 6.20, materialCode: "PC", materialCostPerKg: 3.85, partWeightKg: 0.125,
-    machineTons: 500, cycleTimeSec: 68, oee: 80, scrapPct: 3.2,
-    laborCostPerPart: 0.115, machineCostPerPart: 0.812, materialCostPerPart: 0.481,
-    totalCostPerPart: 5.01, marginPct: 19.2, annualRevenue: 372000, annualGrossProfit: 71424,
-    status: "ACTIVE", lastPriceUpdate: "2025-07-01", nextPriceReview: "2026-07-01" },
-  // Industrial segment
-  { id: "ip11", partNo: "IN-BK-011", description: "Industrial Bracket Type IV", customer: "Siemens Industry",
-    segment: "INDUSTRIAL", annualVolume: 36000, monthlyVolume: 3000,
-    unitPrice: 3.45, materialCode: "PA6", materialCostPerKg: 2.85, partWeightKg: 0.082,
-    machineTons: 250, cycleTimeSec: 45, oee: 83, scrapPct: 2.2,
-    laborCostPerPart: 0.058, machineCostPerPart: 0.298, materialCostPerPart: 0.234,
-    totalCostPerPart: 2.72, marginPct: 21.2, annualRevenue: 124200, annualGrossProfit: 26310,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-07-01" },
-  { id: "ip12", partNo: "IN-CB-012", description: "Cable Conduit Body – IP67", customer: "ABB Group",
-    segment: "INDUSTRIAL", annualVolume: 48000, monthlyVolume: 4000,
-    unitPrice: 2.85, materialCode: "ABS", materialCostPerKg: 1.95, partWeightKg: 0.078,
-    machineTons: 250, cycleTimeSec: 38, oee: 86, scrapPct: 1.8,
-    laborCostPerPart: 0.048, machineCostPerPart: 0.245, materialCostPerPart: 0.152,
-    totalCostPerPart: 2.25, marginPct: 21.1, annualRevenue: 136800, annualGrossProfit: 28877,
-    status: "ACTIVE", lastPriceUpdate: "2025-04-01", nextPriceReview: "2026-04-01" },
-  { id: "ip13", partNo: "IN-HB-013", description: "Housing Body – Motor Drive", customer: "SEW-Eurodrive",
-    segment: "INDUSTRIAL", annualVolume: 24000, monthlyVolume: 2000,
-    unitPrice: 5.80, materialCode: "PA6", materialCostPerKg: 2.85, partWeightKg: 0.145,
-    machineTons: 500, cycleTimeSec: 62, oee: 79, scrapPct: 2.8,
-    laborCostPerPart: 0.105, machineCostPerPart: 0.652, materialCostPerPart: 0.413,
-    totalCostPerPart: 4.68, marginPct: 19.3, annualRevenue: 139200, annualGrossProfit: 26858,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  // HVAC segment
-  { id: "ip14", partNo: "HV-FT-014", description: "HVAC Fitting Ø32 – 45°", customer: "Daikin Europe",
-    segment: "HVAC", annualVolume: 156000, monthlyVolume: 13000,
-    unitPrice: 0.95, materialCode: "PP", materialCostPerKg: 1.45, partWeightKg: 0.035,
-    machineTons: 180, cycleTimeSec: 24, oee: 88, scrapPct: 1.4,
-    laborCostPerPart: 0.015, machineCostPerPart: 0.082, materialCostPerPart: 0.051,
-    totalCostPerPart: 0.745, marginPct: 21.6, annualRevenue: 148200, annualGrossProfit: 32011,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip15", partNo: "HV-VB-015", description: "Ventilation Body – Split AC", customer: "Daikin Europe",
-    segment: "HVAC", annualVolume: 84000, monthlyVolume: 7000,
-    unitPrice: 1.65, materialCode: "ABS", materialCostPerKg: 1.95, partWeightKg: 0.058,
-    machineTons: 250, cycleTimeSec: 35, oee: 85, scrapPct: 1.8,
-    laborCostPerPart: 0.028, machineCostPerPart: 0.182, materialCostPerPart: 0.113,
-    totalCostPerPart: 1.318, marginPct: 20.1, annualRevenue: 138600, annualGrossProfit: 27850,
-    status: "ACTIVE", lastPriceUpdate: "2025-07-01", nextPriceReview: "2026-07-01" },
-  { id: "ip16", partNo: "HV-GR-016", description: "Grille Cover – Heat Pump Unit", customer: "Viessmann",
-    segment: "HVAC", annualVolume: 42000, monthlyVolume: 3500,
-    unitPrice: 2.40, materialCode: "ABS", materialCostPerKg: 1.95, partWeightKg: 0.088,
-    machineTons: 350, cycleTimeSec: 44, oee: 82, scrapPct: 2.0,
-    laborCostPerPart: 0.042, machineCostPerPart: 0.272, materialCostPerPart: 0.172,
-    totalCostPerPart: 1.92, marginPct: 20.0, annualRevenue: 100800, annualGrossProfit: 20160,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  // Medical segment
-  { id: "ip17", partNo: "ME-SC-017", description: "Syringe Cap – ISO 13485", customer: "Fresenius Medical",
-    segment: "MEDICAL", annualVolume: 1200000, monthlyVolume: 100000,
-    unitPrice: 0.085, materialCode: "PP", materialCostPerKg: 1.45, partWeightKg: 0.004,
-    machineTons: 180, cycleTimeSec: 12, oee: 94, scrapPct: 0.3,
-    laborCostPerPart: 0.004, machineCostPerPart: 0.018, materialCostPerPart: 0.006,
-    totalCostPerPart: 0.065, marginPct: 23.5, annualRevenue: 102000, annualGrossProfit: 23970,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-  { id: "ip18", partNo: "ME-VH-018", description: "Valve Housing – Infusion Set", customer: "Fresenius Medical",
-    segment: "MEDICAL", annualVolume: 360000, monthlyVolume: 30000,
-    unitPrice: 0.32, materialCode: "PC", materialCostPerKg: 3.85, partWeightKg: 0.012,
-    machineTons: 180, cycleTimeSec: 20, oee: 93, scrapPct: 0.5,
-    laborCostPerPart: 0.012, machineCostPerPart: 0.045, materialCostPerPart: 0.046,
-    totalCostPerPart: 0.248, marginPct: 22.5, annualRevenue: 115200, annualGrossProfit: 25920,
-    status: "ACTIVE", lastPriceUpdate: "2025-01-01", nextPriceReview: "2026-01-01" },
-];
-
 // ─── Financial Periods (24 months) ───────────────────────────────────────────
 
 function fp(
   month: string, label: string,
   tRev: number, tGMPct: number, tEBITDAPct: number,
-  iRev: number, iGMPct: number, iEBITDAPct: number,
   cash: number, arOvd: number, apOvd: number, wip: number,
   rfqW: number, rfqL: number, rfqS: number,
 ): FinancialPeriod {
   const tGP = Math.round(tRev * tGMPct / 100);
   const tEBITDA = Math.round(tRev * tEBITDAPct / 100);
-  const iGP = Math.round(iRev * iGMPct / 100);
-  const iEBITDA = Math.round(iRev * iEBITDAPct / 100);
-  const rev = tRev + iRev;
-  const gp = tGP + iGP;
-  const gmPct = Math.round(gp / rev * 1000) / 10;
-  const ebitda = tEBITDA + iEBITDA;
-  const ebitdaPct = Math.round(ebitda / rev * 1000) / 10;
-  const netProfit = Math.round(ebitda * 0.75);
+  const netProfit = Math.round(tEBITDA * 0.75);
   return {
     month, label,
     toolingRevenue: tRev, toolingGP: tGP, toolingGMPct: tGMPct, toolingEBITDA: tEBITDA, toolingEBITDAPct: tEBITDAPct,
-    injectionRevenue: iRev, injectionGP: iGP, injectionGMPct: iGMPct, injectionEBITDA: iEBITDA, injectionEBITDAPct: iEBITDAPct,
-    revenue: rev, grossProfit: gp, gmPct, ebitda, ebitdaPct,
-    netProfit, netProfitPct: Math.round(netProfit / rev * 1000) / 10,
+    revenue: tRev, grossProfit: tGP, gmPct: tGMPct, ebitda: tEBITDA, ebitdaPct: tEBITDAPct,
+    netProfit, netProfitPct: Math.round(netProfit / tRev * 1000) / 10,
     cashBalance: cash, arOverdue: arOvd, apOverdue: apOvd, wip,
     rfqWon: rfqW, rfqLost: rfqL, rfqSent: rfqS,
   };
 }
 
 export const FINANCIAL_PERIODS: FinancialPeriod[] = [
-  fp("2024-05","May '24",  358000,38.2,16.4, 182000,21.5, 8.2, 1200000,  82000, 45000, 1850000, 3,2,7),
-  fp("2024-06","Jun '24",  412000,40.1,18.2, 195000,22.8, 9.5, 1420000,  95000, 38000, 2080000, 4,1,7),
-  fp("2024-07","Jul '24",  287000,35.8,13.2, 198000,21.2, 8.0, 1250000,  68000, 52000, 1920000, 2,3,6),
-  fp("2024-08","Aug '24",  198000,32.5, 9.8, 142000,19.5, 6.5, 1100000,  42000, 28000, 1640000, 1,1,4),
-  fp("2024-09","Sep '24",  395000,39.5,17.8, 215000,23.2, 9.8, 1350000,  88000, 42000, 2150000, 4,2,8),
-  fp("2024-10","Oct '24",  445000,41.2,19.5, 228000,24.1,10.5, 1620000, 105000, 55000, 2380000, 5,1,8),
-  fp("2024-11","Nov '24",  478000,42.0,20.2, 242000,24.8,11.2, 1850000, 118000, 62000, 2520000, 5,2,9),
-  fp("2024-12","Dec '24",  325000,37.5,15.0, 188000,22.5, 8.8, 1750000,  92000, 48000, 2180000, 3,2,7),
-  fp("2025-01","Jan '25",  285000,34.8,12.5, 195000,21.8, 8.2, 1600000,  78000, 42000, 1980000, 2,2,5),
-  fp("2025-02","Feb '25",  340000,37.2,15.8, 208000,22.5, 9.2, 1550000,  88000, 38000, 2120000, 3,1,6),
-  fp("2025-03","Mar '25",  418000,39.8,17.5, 225000,23.8,10.2, 1720000,  95000, 48000, 2340000, 4,2,8),
-  fp("2025-04","Apr '25",  462000,41.5,19.8, 238000,24.5,11.0, 1950000, 102000, 52000, 2580000, 5,1,8),
-  fp("2025-05","May '25",  495000,42.8,21.2, 252000,25.2,11.8, 2100000, 115000, 58000, 2750000, 6,1,9),
-  fp("2025-06","Jun '25",  518000,43.5,21.8, 265000,25.8,12.2, 2350000, 122000, 65000, 2890000, 5,2,9),
-  fp("2025-07","Jul '25",  385000,40.2,18.5, 248000,24.2,10.8, 2200000,  98000, 55000, 2620000, 3,2,7),
-  fp("2025-08","Aug '25",  215000,34.5,10.8, 162000,20.5, 7.2, 1900000,  72000, 38000, 2150000, 2,2,5),
-  fp("2025-09","Sep '25",  482000,41.8,20.2, 258000,25.5,11.5, 2150000, 112000, 62000, 2820000, 5,1,8),
-  fp("2025-10","Oct '25",  525000,43.2,21.5, 272000,26.2,12.5, 2420000, 128000, 68000, 3050000, 6,1,9),
-  fp("2025-11","Nov '25",  548000,44.1,22.5, 285000,26.8,13.0, 2680000, 142000, 72000, 3180000, 7,1,10),
-  fp("2025-12","Dec '25",  395000,39.5,17.2, 245000,24.5,10.5, 2550000, 108000, 58000, 2920000, 4,2,8),
-  fp("2026-01","Jan '26",  318000,37.8,15.5, 235000,23.5, 9.8, 2380000,  92000, 48000, 2640000, 3,1,6),
-  fp("2026-02","Feb '26",  385000,39.2,17.5, 248000,24.2,10.5, 2420000,  98000, 52000, 2780000, 4,1,7),
-  fp("2026-03","Mar '26",  445000,41.5,19.8, 262000,25.0,11.2, 2680000, 115000, 62000, 3020000, 5,1,8),
-  fp("2026-04","Apr '26",  428000,40.8,19.2, 258000,24.8,11.0, 2520000, 142000, 68000, 2950000, 4,2,8),
+  fp("2024-05","May '24",  358000,38.2,16.4, 1200000,  82000, 45000, 1850000, 3,2,7),
+  fp("2024-06","Jun '24",  412000,40.1,18.2, 1420000,  95000, 38000, 2080000, 4,1,7),
+  fp("2024-07","Jul '24",  287000,35.8,13.2, 1250000,  68000, 52000, 1920000, 2,3,6),
+  fp("2024-08","Aug '24",  198000,32.5, 9.8, 1100000,  42000, 28000, 1640000, 1,1,4),
+  fp("2024-09","Sep '24",  395000,39.5,17.8, 1350000,  88000, 42000, 2150000, 4,2,8),
+  fp("2024-10","Oct '24",  445000,41.2,19.5, 1620000, 105000, 55000, 2380000, 5,1,8),
+  fp("2024-11","Nov '24",  478000,42.0,20.2, 1850000, 118000, 62000, 2520000, 5,2,9),
+  fp("2024-12","Dec '24",  325000,37.5,15.0, 1750000,  92000, 48000, 2180000, 3,2,7),
+  fp("2025-01","Jan '25",  285000,34.8,12.5, 1600000,  78000, 42000, 1980000, 2,2,5),
+  fp("2025-02","Feb '25",  340000,37.2,15.8, 1550000,  88000, 38000, 2120000, 3,1,6),
+  fp("2025-03","Mar '25",  418000,39.8,17.5, 1720000,  95000, 48000, 2340000, 4,2,8),
+  fp("2025-04","Apr '25",  462000,41.5,19.8, 1950000, 102000, 52000, 2580000, 5,1,8),
+  fp("2025-05","May '25",  495000,42.8,21.2, 2100000, 115000, 58000, 2750000, 6,1,9),
+  fp("2025-06","Jun '25",  518000,43.5,21.8, 2350000, 122000, 65000, 2890000, 5,2,9),
+  fp("2025-07","Jul '25",  385000,40.2,18.5, 2200000,  98000, 55000, 2620000, 3,2,7),
+  fp("2025-08","Aug '25",  215000,34.5,10.8, 1900000,  72000, 38000, 2150000, 2,2,5),
+  fp("2025-09","Sep '25",  482000,41.8,20.2, 2150000, 112000, 62000, 2820000, 5,1,8),
+  fp("2025-10","Oct '25",  525000,43.2,21.5, 2420000, 128000, 68000, 3050000, 6,1,9),
+  fp("2025-11","Nov '25",  548000,44.1,22.5, 2680000, 142000, 72000, 3180000, 7,1,10),
+  fp("2025-12","Dec '25",  395000,39.5,17.2, 2550000, 108000, 58000, 2920000, 4,2,8),
+  fp("2026-01","Jan '26",  318000,37.8,15.5, 2380000,  92000, 48000, 2640000, 3,1,6),
+  fp("2026-02","Feb '26",  385000,39.2,17.5, 2420000,  98000, 52000, 2780000, 4,1,7),
+  fp("2026-03","Mar '26",  445000,41.5,19.8, 2680000, 115000, 62000, 3020000, 5,1,8),
+  fp("2026-04","Apr '26",  428000,40.8,19.2, 2520000, 142000, 68000, 2950000, 4,2,8),
 ];
 
 // ─── Cash Flow Items ──────────────────────────────────────────────────────────
@@ -535,14 +392,6 @@ export const CASH_FLOW_ITEMS: CashFlowItem[] = [
     dueDate: "2026-05-15", type: "INFLOW", status: "CONFIRMED", category: "Tooling Invoice" },
   { id: "cf4", description: "T-2025-014 – T1 Sample 25%", customer: "Hella GmbH", amount: 35750,
     dueDate: "2026-05-31", type: "INFLOW", status: "PLANNED", category: "Tooling Invoice" },
-  { id: "cf5", description: "Serial production – Apr 2026", customer: "BMW AG", amount: 35820,
-    dueDate: "2026-05-10", type: "INFLOW", status: "CONFIRMED", category: "Injection Invoice" },
-  { id: "cf6", description: "Serial production – Apr 2026", customer: "Faurecia SE", amount: 29100,
-    dueDate: "2026-05-15", type: "INFLOW", status: "CONFIRMED", category: "Injection Invoice" },
-  { id: "cf7", description: "Serial production – Mar 2026 (OVERDUE)", customer: "Stellantis NV", amount: 8960,
-    dueDate: "2026-04-10", type: "INFLOW", status: "OVERDUE", daysOverdue: 14, category: "Injection Invoice" },
-  { id: "cf8", description: "Serial production – Q1 outstanding", customer: "Hella GmbH", amount: 31000,
-    dueDate: "2026-04-01", type: "INFLOW", status: "OVERDUE", daysOverdue: 23, category: "Injection Invoice" },
   { id: "cf9", description: "Steel purchase order – T-2026-013", customer: "Böhler Edelstahl", amount: -14200,
     dueDate: "2026-05-05", type: "OUTFLOW", status: "CONFIRMED", category: "Material Purchase" },
   { id: "cf10", description: "Hot runner – T-2025-006", customer: "HASCO Hasenclever", amount: -22000,
@@ -605,42 +454,6 @@ export const RISK_ACTIONS: RiskAction[] = [
     ],
   },
   {
-    id: "ra4", title: "OEE Line 3 Dropped to 79% – Injection",
-    description: "Injection line 3 (500t Engel) OEE deteriorated from 87% to 79% over last 4 weeks. Root cause: increased scrap on PA6 parts (BO-EB-003) due to mold temperature fluctuation.",
-    severity: "HIGH", category: "OPERATIONAL", impactEur: -18400,
-    owner: "Tomasz Bąk", dueDate: "2026-05-01", status: "IN_PROGRESS",
-    linkedProject: undefined, linkedCustomer: "Robert Bosch GmbH",
-    actions: [
-      "Replace mold temperature controller on Line 3 by 2026-04-26",
-      "Increase inspection frequency to 100% for BO-EB-003 until stable",
-      "Root cause analysis report to be shared with Bosch quality by 2026-05-01",
-    ],
-  },
-  {
-    id: "ra5", title: "Hella GmbH – AR Overdue €31,000 (23 days)",
-    description: "Hella GmbH has outstanding injection molding invoices for €31,000, overdue by 23 days. Payment terms are 30 days. Customer cites 'approval process delay' but no dispute filed.",
-    severity: "HIGH", category: "FINANCIAL", impactEur: -31000,
-    owner: "Anna Nowak", dueDate: "2026-04-28", status: "OPEN",
-    linkedProject: undefined, linkedCustomer: "Hella GmbH",
-    actions: [
-      "Send formal reminder letter with late payment interest clause",
-      "Contact Hella AP department directly – follow up weekly",
-      "Consider credit hold for next shipment if not paid by 2026-05-05",
-    ],
-  },
-  {
-    id: "ra6", title: "ABS Resin Price Increase +8% – Margin Impact",
-    description: "BASF announced ABS resin price increase of +8% effective June 2026. Impacts 3 injection parts: VA-MC-005, FA-AI-007, IN-CB-012 with combined annual revenue of €758k. No surcharge clause active.",
-    severity: "HIGH", category: "COMMERCIAL", impactEur: -22400,
-    owner: "Anna Nowak", dueDate: "2026-05-31", status: "MONITORING",
-    linkedProject: undefined, linkedCustomer: undefined,
-    actions: [
-      "Initiate annual price review with affected customers (Valeo, Faurecia, ABB)",
-      "Draft surcharge proposal for min 80% pass-through of material increase",
-      "Evaluate alternative ABS suppliers – SABIC qualification",
-    ],
-  },
-  {
     id: "ra7", title: "T-2025-006 Design Over-Run – Faurecia Armrest",
     description: "Design and CAM hours on T-2025-006 already 10% over plan at only 35% completion. Extrapolation indicates €8,500 design overrun by project end. Three open ECOs pending.",
     severity: "MEDIUM", category: "FINANCIAL", impactEur: -8500,
@@ -649,17 +462,6 @@ export const RISK_ACTIONS: RiskAction[] = [
     actions: [
       "Freeze non-billable design changes – require ECO sign-off before any modifications",
       "Submit change request to Faurecia for 2 of 3 pending ECOs",
-    ],
-  },
-  {
-    id: "ra8", title: "Stallantis NV – Payment Terms 90 days (Working Capital)",
-    description: "Stellantis payment terms at 90 days create €96k average float. With growing injection volumes, this is straining working capital. Current DSO for Stellantis: 94 days.",
-    severity: "MEDIUM", category: "COMMERCIAL", impactEur: -96000,
-    owner: "Anna Nowak", dueDate: "2026-06-30", status: "MONITORING",
-    linkedProject: undefined, linkedCustomer: "Stellantis NV",
-    actions: [
-      "Negotiate payment terms reduction to 60 days at next annual review",
-      "Explore factoring for Stellantis receivables (cost ~1.2%/year)",
     ],
   },
   {
@@ -693,84 +495,8 @@ export const CEO_ALERTS: CeoAlert[] = [
     detail: "T-2025-006 Steel milestone. Legal escalation required.", timestamp: "2026-04-24T08:00:00" },
   { id: "a2", type: "CRITICAL", title: "T-2024-001 BMW – margin now negative (-5.4%)",
     detail: "EFC exceeded quoted price. Recovery negotiation active.", timestamp: "2026-04-23T14:30:00" },
-  { id: "a3", type: "WARNING", title: "Hella AR overdue €31,000 – Day 23",
-    detail: "No dispute raised but payment stalled. Reminder sent.", timestamp: "2026-04-22T09:15:00" },
-  { id: "a4", type: "WARNING", title: "ABS resin +8% from BASF – June 2026",
-    detail: "€22,400 annual impact if surcharge not recovered. Action needed.", timestamp: "2026-04-21T11:00:00" },
-  { id: "a5", type: "WARNING", title: "OEE Line 3 degraded to 79%",
-    detail: "PA6 scrap rate increased. Temperature controller fault.", timestamp: "2026-04-20T07:45:00" },
   { id: "a6", type: "INFO", title: "ZF T-2025-007 T1 Sample accepted – invoice €23,600",
     detail: "Milestone invoice issued. Payment due 2026-05-15.", timestamp: "2026-04-18T16:00:00" },
-];
-
-// ─── Injection RFQs ───────────────────────────────────────────────────────────
-
-export const INJECTION_RFQS: InjectionRFQ[] = [
-  { id: "ir1", customer: "BMW AG", partName: "Door Panel Retainer Clip D-45", segment: "AUTOMOTIVE",
-    annualVolume: 240000, quotedUnitPrice: 0.65, targetMarginPct: 20,
-    status: "WON", submittedDate: "2025-11-15", decisionDate: "2025-12-20", annualRevenuePotential: 156000 },
-  { id: "ir2", customer: "Continental AG", partName: "ECU Cover Bracket – Revision B", segment: "AUTOMOTIVE",
-    annualVolume: 85000, quotedUnitPrice: 2.45, targetMarginPct: 18,
-    status: "NEGOTIATION", submittedDate: "2026-02-01", annualRevenuePotential: 208250 },
-  { id: "ir3", customer: "Valeo Systems", partName: "Door Mirror Housing – Gen 4", segment: "AUTOMOTIVE",
-    annualVolume: 62000, quotedUnitPrice: 4.20, targetMarginPct: 19,
-    status: "SENT", submittedDate: "2026-03-15", annualRevenuePotential: 260400 },
-  { id: "ir4", customer: "Daikin Europe", partName: "HVAC Manifold Body Ø45", segment: "HVAC",
-    annualVolume: 96000, quotedUnitPrice: 1.85, targetMarginPct: 21,
-    status: "COSTING", submittedDate: "2026-04-01", annualRevenuePotential: 177600 },
-  { id: "ir5", customer: "Fresenius Medical", partName: "IV Connector Housing – ISO 11040", segment: "MEDICAL",
-    annualVolume: 480000, quotedUnitPrice: 0.28, targetMarginPct: 23,
-    status: "WON", submittedDate: "2025-10-10", decisionDate: "2025-12-01", annualRevenuePotential: 134400 },
-  { id: "ir6", customer: "SEW-Eurodrive", partName: "Motor Drive Cover Plate", segment: "INDUSTRIAL",
-    annualVolume: 18000, quotedUnitPrice: 6.80, targetMarginPct: 20,
-    status: "LOST", submittedDate: "2025-12-05", decisionDate: "2026-02-28", annualRevenuePotential: 122400 },
-  { id: "ir7", customer: "Magna International", partName: "Bumper Clip Series X – 4cav", segment: "AUTOMOTIVE",
-    annualVolume: 360000, quotedUnitPrice: 0.38, targetMarginPct: 19,
-    status: "SENT", submittedDate: "2026-04-10", annualRevenuePotential: 136800 },
-  { id: "ir8", customer: "Viessmann", partName: "Heat Pump Grille Cover 600mm", segment: "HVAC",
-    annualVolume: 28000, quotedUnitPrice: 3.20, targetMarginPct: 20,
-    status: "NEW", submittedDate: "2026-04-20", annualRevenuePotential: 89600 },
-  { id: "ir9", customer: "ABB Group", partName: "Switchgear Housing – IP54", segment: "INDUSTRIAL",
-    annualVolume: 24000, quotedUnitPrice: 4.85, targetMarginPct: 21,
-    status: "WON", submittedDate: "2026-01-20", decisionDate: "2026-03-10", annualRevenuePotential: 116400 },
-  { id: "ir10", customer: "Aptiv PLC", partName: "Connector Carrier Assembly", segment: "AUTOMOTIVE",
-    annualVolume: 720000, quotedUnitPrice: 0.15, targetMarginPct: 18,
-    status: "COSTING", submittedDate: "2026-04-15", annualRevenuePotential: 108000 },
-];
-
-// ─── Legacy RFQs (Tooling Pipeline) ──────────────────────────────────────────
-
-export const RFQS: Rfq[] = [
-  { id: "r1", customerId: "c1", partName: "Headlamp Bracket – Series 7", type: "TOOLING",
-    service: "NEW_TOOL", status: "SENT", value: 68000, submittedDate: "2026-04-10" },
-  { id: "r2", customerId: "c2", partName: "Throttle Body Housing", type: "TOOLING",
-    service: "NEW_TOOL", status: "NEGOTIATION", value: 95000, submittedDate: "2026-03-20" },
-  { id: "r3", customerId: "c3", partName: "Wheel Arch Liner – PA6GF", type: "TOOLING",
-    service: "NEW_TOOL", status: "WON", value: 48500, submittedDate: "2026-02-05", decisionDate: "2026-03-25" },
-  { id: "r4", customerId: "c4", partName: "ADAS Camera Bracket Mod", type: "TOOLING",
-    service: "MODIFICATION_ECO", status: "SENT", value: 14500, submittedDate: "2026-04-05" },
-  { id: "r5", customerId: "c5", partName: "Battery Retention Clip Array", type: "TOOLING",
-    service: "NEW_TOOL", status: "COSTING", value: 82000, submittedDate: "2026-04-18" },
-  { id: "r6", customerId: "c6", partName: "Console Trim Repair Inserts", type: "TOOLING",
-    service: "PAID_REPAIR", status: "WON", value: 22000, submittedDate: "2026-01-15", decisionDate: "2026-02-20" },
-  { id: "r7", customerId: "c7", partName: "Seat Cushion Guide Pin", type: "TOOLING",
-    service: "SPARE_PARTS", status: "LOST", value: 5200, submittedDate: "2026-01-20", decisionDate: "2026-02-28" },
-  { id: "r8", customerId: "c8", partName: "ZF Transfer Case Seal Cap", type: "TOOLING",
-    service: "NEW_TOOL", status: "SENT", value: 56000, submittedDate: "2026-03-28" },
-  { id: "r9", customerId: "c9", partName: "PDC Sensor Housing 3-Pin", type: "TOOLING",
-    service: "NEW_TOOL", status: "NEW", value: 38500, submittedDate: "2026-04-22" },
-  { id: "r10", customerId: "c10", partName: "Rear Lamp Diffuser Housing", type: "TOOLING",
-    service: "NEW_TOOL", status: "NEGOTIATION", value: 125000, submittedDate: "2026-02-28" },
-  { id: "r11", customerId: "c1", partName: "Pillar Trim Repair", type: "TOOLING",
-    service: "WARRANTY_REPAIR", status: "WON", value: 0, submittedDate: "2026-03-10", decisionDate: "2026-03-15" },
-  { id: "r12", customerId: "c2", partName: "Injection Valve Housing Mod", type: "TOOLING",
-    service: "MODIFICATION_ECO", status: "WON", value: 18500, submittedDate: "2026-01-05", decisionDate: "2026-01-25" },
-  { id: "r13", customerId: "c3", partName: "ABS Module Bracket – New", type: "TOOLING",
-    service: "NEW_TOOL", status: "LOST", value: 72000, submittedDate: "2025-12-10", decisionDate: "2026-01-31" },
-  { id: "r14", customerId: "c6", partName: "Foam Insert Tool Transfer", type: "TOOLING",
-    service: "CHINA_TRANSFER", status: "WON", value: 32000, submittedDate: "2026-02-10", decisionDate: "2026-03-05" },
-  { id: "r15", customerId: "c8", partName: "Driveshaft Boot – New 4cav", type: "TOOLING",
-    service: "NEW_TOOL", status: "COSTING", value: 145000, submittedDate: "2026-04-20" },
 ];
 
 // ─── Pipeline Deals (CRM Kanban) ─────────────────────────────────────────────
@@ -896,15 +622,183 @@ export const APP_SETTINGS = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 export const getCustomerById = (id: string) => CUSTOMERS.find(c => c.id === id);
-export const getRfqsByCustomer = (id: string) => RFQS.filter(r => r.customerId === id);
 export const getClaimsByCustomer = (id: string) => CLAIMS.filter(c => c.customerId === id);
 export const getDealsByStage = (stage: string) => PIPELINE_DEALS.filter(d => d.stage === stage);
 export const getLatestKpi = () => FINANCIAL_PERIODS[FINANCIAL_PERIODS.length - 1];
 export const getPreviousKpi = () => FINANCIAL_PERIODS[FINANCIAL_PERIODS.length - 2];
 
-export const getEnrichedRfqs = () =>
-  RFQS.map(r => ({ ...r, customer: getCustomerById(r.customerId) }));
 export const getEnrichedClaims = () =>
   CLAIMS.map(c => ({ ...c, customer: getCustomerById(c.customerId) }));
 export const getEnrichedDeals = () =>
   PIPELINE_DEALS.map(d => ({ ...d, customer: getCustomerById(d.customerId) }));
+
+// ─── Org Chart ────────────────────────────────────────────────────────────────
+
+export const EMPLOYEES: OrgEmployee[] = [
+  // ── Management
+  {
+    id: "e1", name: "Tomasz Keller", position: "Managing Director",
+    department: "Management", email: "t.keller@shapers.pl",
+    phone: "+48 600 100 001", role: "ADMIN", hireYear: 2010,
+  },
+  // ── Technical
+  {
+    id: "e2", name: "Marek Wiśniewski", position: "Technical Director",
+    department: "Technical", email: "m.wisniewski@shapers.pl",
+    phone: "+48 600 100 002", reportsTo: "e1", role: "ENGINEER", hireYear: 2012,
+  },
+  {
+    id: "e3", name: "Artur Nowak", position: "CNC Workshop Lead",
+    department: "Technical", email: "a.nowak@shapers.pl",
+    phone: "+48 600 100 003", reportsTo: "e2", role: "ENGINEER", hireYear: 2014,
+  },
+  {
+    id: "e4", name: "Piotr Kowalski", position: "CNC Machinist",
+    department: "Technical", email: "p.kowalski@shapers.pl",
+    reportsTo: "e3", role: "VIEWER", hireYear: 2016,
+  },
+  {
+    id: "e5", name: "Łukasz Zając", position: "CNC Machinist",
+    department: "Technical", email: "l.zajac@shapers.pl",
+    reportsTo: "e3", role: "VIEWER", hireYear: 2018,
+  },
+  {
+    id: "e6", name: "Dawid Sikora", position: "CNC Machinist",
+    department: "Technical", email: "d.sikora@shapers.pl",
+    reportsTo: "e3", role: "VIEWER", hireYear: 2020,
+  },
+  {
+    id: "e7", name: "Rafał Kubiak", position: "EDM Operator Senior",
+    department: "Technical", email: "r.kubiak@shapers.pl",
+    phone: "+48 600 100 007", reportsTo: "e2", role: "ENGINEER", hireYear: 2013,
+  },
+  {
+    id: "e8", name: "Michał Dąbrowski", position: "EDM Operator",
+    department: "Technical", email: "m.dabrowski@shapers.pl",
+    reportsTo: "e7", role: "VIEWER", hireYear: 2019,
+  },
+  // ── Design
+  {
+    id: "e9", name: "Katarzyna Jankowska", position: "Design & CAM Lead",
+    department: "Design", email: "k.jankowska@shapers.pl",
+    phone: "+48 600 100 009", reportsTo: "e2", role: "ENGINEER", hireYear: 2015,
+  },
+  {
+    id: "e10", name: "Tomasz Wróbel", position: "CAD Designer",
+    department: "Design", email: "t.wrobel@shapers.pl",
+    reportsTo: "e9", role: "ENGINEER", hireYear: 2017,
+  },
+  {
+    id: "e11", name: "Mateusz Kaczmarek", position: "CAM Engineer",
+    department: "Design", email: "m.kaczmarek@shapers.pl",
+    reportsTo: "e9", role: "ENGINEER", hireYear: 2021,
+  },
+  // ── Sales
+  {
+    id: "e12", name: "Anna Kowalczyk", position: "Sales & Commercial Director",
+    department: "Sales", email: "a.kowalczyk@shapers.pl",
+    phone: "+48 600 100 012", reportsTo: "e1", role: "SALES", hireYear: 2013,
+  },
+  {
+    id: "e13", name: "Bartosz Mazur", position: "Key Account Manager (OEM)",
+    department: "Sales", email: "b.mazur@shapers.pl",
+    phone: "+48 600 100 013", reportsTo: "e12", role: "SALES", hireYear: 2016,
+  },
+  {
+    id: "e14", name: "Karolina Lis", position: "Key Account Manager (Tier1)",
+    department: "Sales", email: "k.lis@shapers.pl",
+    phone: "+48 600 100 014", reportsTo: "e12", role: "SALES", hireYear: 2018,
+  },
+  // ── Finance
+  {
+    id: "e15", name: "Ewa Adamczyk", position: "Finance & HR Manager",
+    department: "Finance", email: "e.adamczyk@shapers.pl",
+    phone: "+48 600 100 015", reportsTo: "e1", role: "FINANCE", hireYear: 2014,
+  },
+  {
+    id: "e16", name: "Paweł Zielonka", position: "Financial Controller",
+    department: "Finance", email: "p.zielonka@shapers.pl",
+    reportsTo: "e15", role: "FINANCE", hireYear: 2019,
+  },
+  // ── Quality
+  {
+    id: "e17", name: "Krzysztof Pawlak", position: "Quality Manager",
+    department: "Quality", email: "k.pawlak@shapers.pl",
+    phone: "+48 600 100 017", reportsTo: "e1", role: "ENGINEER", hireYear: 2015,
+  },
+  {
+    id: "e18", name: "Joanna Wierzbicka", position: "QC Engineer",
+    department: "Quality", email: "j.wierzbicka@shapers.pl",
+    reportsTo: "e17", role: "ENGINEER", hireYear: 2022,
+  },
+];
+
+// ─── Injection Presses ────────────────────────────────────────────────────────
+
+export const INJECTION_PRESSES: InjectionPress[] = [
+  { id: "pr1", name: "ARBURG 370S – 80T",      tonnage: 80,  status: "RUNNING",     currentPartId: "ip2",  utilizationPct: 88, oee: 87, plannedHours: 168, actualHours: 148 },
+  { id: "pr2", name: "ENGEL E-MOTION – 150T",  tonnage: 150, status: "RUNNING",     currentPartId: "ip1",  utilizationPct: 82, oee: 83, plannedHours: 168, actualHours: 138 },
+  { id: "pr3", name: "KraussMaffei – 250T",    tonnage: 250, status: "RUNNING",     currentPartId: "ip4",  utilizationPct: 79, oee: 81, plannedHours: 168, actualHours: 133 },
+  { id: "pr4", name: "DEMAG D350 – 350T",      tonnage: 350, status: "MAINTENANCE", currentPartId: undefined, utilizationPct: 0, oee: 0, plannedHours: 168, actualHours: 0 },
+  { id: "pr5", name: "HAITIAN MA500 – 500T",   tonnage: 500, status: "RUNNING",     currentPartId: "ip9",  utilizationPct: 71, oee: 79, plannedHours: 168, actualHours: 119 },
+  { id: "pr6", name: "ENGEL DUO 800 – 800T",   tonnage: 800, status: "IDLE",        currentPartId: undefined, utilizationPct: 45, oee: 0, plannedHours: 168, actualHours: 76 },
+];
+
+// ─── Injection Parts ──────────────────────────────────────────────────────────
+
+export const INJECTION_PARTS: InjectionPart[] = [
+  { id: "ip1",  partNo: "IP-BMW-001",  description: "Door Panel Clip Set",           customerId: "c1",  material: "PP",      weightGrams: 45,  cycleTimeSec: 28, cavities: 4,  annualVolume: 840000,  pricePerPiece: 0.38, materialCostPerPiece: 0.09, status: "ACTIVE",    pressId: "pr2", launchDate: "2024-03-01", toolNo: "T-2023-008" },
+  { id: "ip2",  partNo: "IP-BSH-001",  description: "Connector Housing 8-Pin",       customerId: "c2",  material: "PA66",    weightGrams: 12,  cycleTimeSec: 18, cavities: 8,  annualVolume: 4800000, pricePerPiece: 0.22, materialCostPerPiece: 0.05, status: "ACTIVE",    pressId: "pr1", launchDate: "2024-01-15", toolNo: "T-2023-004" },
+  { id: "ip3",  partNo: "IP-CON-001",  description: "Air Intake Bracket",            customerId: "c3",  material: "PP+GF30", weightGrams: 68,  cycleTimeSec: 35, cavities: 2,  annualVolume: 180000,  pricePerPiece: 1.12, materialCostPerPiece: 0.28, status: "ACTIVE",    pressId: "pr2", launchDate: "2024-06-01", toolNo: "T-2023-011" },
+  { id: "ip4",  partNo: "IP-VAL-001",  description: "Airbag Cover Retainer",         customerId: "c4",  material: "PC",      weightGrams: 185, cycleTimeSec: 48, cavities: 1,  annualVolume: 95000,   pricePerPiece: 2.85, materialCostPerPiece: 0.82, status: "ACTIVE",    pressId: "pr3", launchDate: "2024-09-01", toolNo: "T-2024-003" },
+  { id: "ip5",  partNo: "IP-APT-001",  description: "Sensor Bracket Housing",        customerId: "c9",  material: "PA6",     weightGrams: 32,  cycleTimeSec: 22, cavities: 4,  annualVolume: 620000,  pricePerPiece: 0.58, materialCostPerPiece: 0.14, status: "ACTIVE",    pressId: "pr1", launchDate: "2025-02-01", toolNo: "T-2024-009" },
+  { id: "ip6",  partNo: "IP-HEL-001",  description: "Lighting Clip Assembly",        customerId: "c10", material: "POM",     weightGrams: 8,   cycleTimeSec: 12, cavities: 16, annualVolume: 9600000, pricePerPiece: 0.11, materialCostPerPiece: 0.03, status: "ACTIVE",    pressId: "pr1", launchDate: "2023-11-01" },
+  { id: "ip7",  partNo: "IP-ZF-001",   description: "Cable Routing Bracket",         customerId: "c8",  material: "PP",      weightGrams: 55,  cycleTimeSec: 30, cavities: 2,  annualVolume: 260000,  pricePerPiece: 0.72, materialCostPerPiece: 0.11, status: "ACTIVE",    pressId: "pr2", launchDate: "2024-04-01", toolNo: "T-2023-015" },
+  { id: "ip8",  partNo: "IP-BMW-002",  description: "B-Pillar Trim Lower",           customerId: "c1",  material: "ABS",     weightGrams: 295, cycleTimeSec: 65, cavities: 1,  annualVolume: 120000,  pricePerPiece: 3.20, materialCostPerPiece: 0.95, status: "ACTIVE",    pressId: "pr5", launchDate: "2025-01-15", toolNo: "T-2024-007" },
+  { id: "ip9",  partNo: "IP-CON-002",  description: "Blower Housing Half-Shell",     customerId: "c3",  material: "PP",      weightGrams: 420, cycleTimeSec: 72, cavities: 1,  annualVolume: 88000,   pricePerPiece: 4.15, materialCostPerPiece: 0.86, status: "ACTIVE",    pressId: "pr5", launchDate: "2025-03-01", toolNo: "T-2025-001" },
+  { id: "ip10", partNo: "IP-MAG-001",  description: "Handle Escutcheon Set",         customerId: "c5",  material: "ABS",     weightGrams: 120, cycleTimeSec: 42, cavities: 2,  annualVolume: 310000,  pricePerPiece: 1.45, materialCostPerPiece: 0.38, status: "ACTIVE",    pressId: "pr3", launchDate: "2024-07-01", toolNo: "T-2024-005" },
+  { id: "ip11", partNo: "IP-FAU-001",  description: "Door Armrest Insert",           customerId: "c6",  material: "PP",      weightGrams: 215, cycleTimeSec: 52, cavities: 1,  annualVolume: 75000,   pricePerPiece: 2.60, materialCostPerPiece: 0.44, status: "NPI",       pressId: "pr3", launchDate: "2026-07-01", toolNo: "T-2025-006" },
+  { id: "ip12", partNo: "IP-STE-001",  description: "Instrument Panel Clip Row",     customerId: "c7",  material: "PP",      weightGrams: 22,  cycleTimeSec: 20, cavities: 8,  annualVolume: 1200000, pricePerPiece: 0.28, materialCostPerPiece: 0.05, status: "PHASE_OUT", pressId: "pr2", launchDate: "2021-06-01" },
+];
+
+// ─── Production Orders ────────────────────────────────────────────────────────
+
+export const PRODUCTION_ORDERS: ProductionOrder[] = [
+  { id: "po1",  orderNo: "PO-2026-041", partId: "ip2",  pressId: "pr1", plannedQty: 480000, actualQty: 318400, scrapQty: 6820,  plannedStart: "2026-04-01", plannedEnd: "2026-04-30", status: "RUNNING",   oee: 87, shift: "A" },
+  { id: "po2",  orderNo: "PO-2026-042", partId: "ip6",  pressId: "pr1", plannedQty: 960000, actualQty: 845200, scrapQty: 6920,  plannedStart: "2026-04-01", plannedEnd: "2026-04-30", status: "RUNNING",   oee: 89, shift: "B" },
+  { id: "po3",  orderNo: "PO-2026-043", partId: "ip1",  pressId: "pr2", plannedQty: 85000,  actualQty: 52000,  scrapQty: 810,   plannedStart: "2026-04-10", plannedEnd: "2026-05-15", status: "RUNNING",   oee: 83, shift: "A" },
+  { id: "po4",  orderNo: "PO-2026-044", partId: "ip3",  pressId: "pr2", plannedQty: 32000,  actualQty: 21500,  scrapQty: 620,   plannedStart: "2026-04-08", plannedEnd: "2026-05-20", status: "RUNNING",   oee: 79, shift: "A" },
+  { id: "po5",  orderNo: "PO-2026-045", partId: "ip4",  pressId: "pr3", plannedQty: 18000,  actualQty: 11200,  scrapQty: 138,   plannedStart: "2026-04-05", plannedEnd: "2026-05-10", status: "RUNNING",   oee: 82, shift: "B" },
+  { id: "po6",  orderNo: "PO-2026-046", partId: "ip10", pressId: "pr3", plannedQty: 25000,  actualQty: 17800,  scrapQty: 326,   plannedStart: "2026-04-12", plannedEnd: "2026-05-25", status: "RUNNING",   oee: 80, shift: "A" },
+  { id: "po7",  orderNo: "PO-2026-040", partId: "ip8",  pressId: "pr5", plannedQty: 22000,  actualQty: 21800,  scrapQty: 198,   plannedStart: "2026-03-20", plannedEnd: "2026-04-25", actualEnd: "2026-04-23", status: "COMPLETED", oee: 84, shift: "C" },
+  { id: "po8",  orderNo: "PO-2026-048", partId: "ip9",  pressId: "pr5", plannedQty: 8500,   actualQty: 5200,   scrapQty: 172,   plannedStart: "2026-04-14", plannedEnd: "2026-05-28", status: "RUNNING",   oee: 76, shift: "A" },
+  { id: "po9",  orderNo: "PO-2026-047", partId: "ip5",  pressId: "pr1", plannedQty: 180000, actualQty: 0,      scrapQty: 0,     plannedStart: "2026-05-02", plannedEnd: "2026-05-31", status: "PLANNED",   oee: 0,  shift: "A" },
+  { id: "po10", orderNo: "PO-2026-038", partId: "ip7",  pressId: "pr2", plannedQty: 45000,  actualQty: 44200,  scrapQty: 820,   plannedStart: "2026-03-15", plannedEnd: "2026-04-18", actualEnd: "2026-04-20", status: "COMPLETED", oee: 85, shift: "B" },
+];
+
+// ─── RFQs ─────────────────────────────────────────────────────────────────────
+
+export const RFQS: RFQ[] = [
+  { id: "rq1",  rfqNo: "RFQ-2026-001", customerId: "c1",  description: "BMW Platform X – Front Door Panel Complete Set (5 parts)",         status: "WON",       requestDate: "2026-01-10", dueDate: "2026-02-14", sentDate: "2026-02-12", decisionDate: "2026-03-05", toolingValue: 285000, serialValuePA: 420000, estimatedToolingCost: 228000, marginPct: 20.0, partsCount: 5 },
+  { id: "rq2",  rfqNo: "RFQ-2026-002", customerId: "c2",  description: "Bosch Connector Housing Family – 4-Series Platform (3 tools)",      status: "WON",       requestDate: "2026-01-18", dueDate: "2026-02-28", sentDate: "2026-02-25", decisionDate: "2026-03-15", toolingValue: 82000,  serialValuePA: 185000, estimatedToolingCost: 63000,  marginPct: 23.2, partsCount: 3 },
+  { id: "rq3",  rfqNo: "RFQ-2025-018", customerId: "c3",  description: "Continental Air Management Duct Set – Generation 4",              status: "WON",       requestDate: "2025-10-05", dueDate: "2025-11-15", sentDate: "2025-11-12", decisionDate: "2025-12-10", toolingValue: 145000, serialValuePA: 210000, estimatedToolingCost: 112000, marginPct: 22.8, partsCount: 4 },
+  { id: "rq4",  rfqNo: "RFQ-2025-022", customerId: "c9",  description: "Aptiv Sensor Bracket Platform A – Full Family (4 variants)",       status: "WON",       requestDate: "2025-11-20", dueDate: "2025-12-31", sentDate: "2025-12-28", decisionDate: "2026-01-20", toolingValue: 96000,  serialValuePA: 245000, estimatedToolingCost: 74500,  marginPct: 22.4, partsCount: 4 },
+  { id: "rq5",  rfqNo: "RFQ-2026-005", customerId: "c8",  description: "ZF Transmission Bracket Family – 3 variants",                     status: "WON",       requestDate: "2026-02-08", dueDate: "2026-03-14", sentDate: "2026-03-12", decisionDate: "2026-04-02", toolingValue: 118000, serialValuePA: 165000, estimatedToolingCost: 89500,  marginPct: 24.2, partsCount: 3 },
+  { id: "rq6",  rfqNo: "RFQ-2026-003", customerId: "c4",  description: "Valeo Airbag Module Housing – new platform",                      status: "LOST",      requestDate: "2026-01-22", dueDate: "2026-02-28", sentDate: "2026-02-26", decisionDate: "2026-03-18", toolingValue: 195000, serialValuePA: 320000, estimatedToolingCost: 152000, marginPct: 22.1, lostReason: "Price – competitor 12% lower", partsCount: 6 },
+  { id: "rq7",  rfqNo: "RFQ-2025-019", customerId: "c5",  description: "Magna Handle Panel Set – 2 parts",                               status: "LOST",      requestDate: "2025-11-01", dueDate: "2025-12-01", sentDate: "2025-11-28", decisionDate: "2025-12-20", toolingValue: 58000,  serialValuePA: 95000,  estimatedToolingCost: 47000,  marginPct: 19.0, lostReason: "Customer in-house tooling preferred", partsCount: 2 },
+  { id: "rq8",  rfqNo: "RFQ-2026-006", customerId: "c7",  description: "Stellantis Trim Set Complete – 7 parts",                         status: "LOST",      requestDate: "2026-02-15", dueDate: "2026-03-20", sentDate: "2026-03-18", decisionDate: "2026-04-10", toolingValue: 320000, serialValuePA: 580000, estimatedToolingCost: 258000, marginPct: 19.4, lostReason: "Program moved to Asia", partsCount: 7 },
+  { id: "rq9",  rfqNo: "RFQ-2026-008", customerId: "c1",  description: "BMW Platform X – Rear Door Panel (3 parts) + B-Pillar",          status: "SENT",      requestDate: "2026-03-05", dueDate: "2026-04-30", sentDate: "2026-04-25", partsCount: 4, toolingValue: 245000, serialValuePA: 385000, estimatedToolingCost: 192000, marginPct: 21.6,
+    costCalc: { material: "PP", materialCostPerKg: 1.20, weightGrams: 285, cycleTimeSec: 58, cavities: 2, annualVolume: 180000, machineRatePerHr: 38, laborRatePerHr: 18, scrapPct: 2.0, packagingCostPerPart: 0.08, logisticsCostPerPart: 0.04, sgaPct: 8, targetMarginPct: 20 } },
+  { id: "rq10", rfqNo: "RFQ-2026-009", customerId: "c10", description: "Hella Lighting Carrier Module – LED Matrix platform",             status: "SENT",      requestDate: "2026-03-12", dueDate: "2026-05-02", sentDate: "2026-04-28", partsCount: 2, toolingValue: 68000,  serialValuePA: 140000, estimatedToolingCost: 53000,  marginPct: 22.1 },
+  { id: "rq11", rfqNo: "RFQ-2026-010", customerId: "c3",  description: "Continental Dashboard Component Set – 5 variants",               status: "SENT",      requestDate: "2026-03-20", dueDate: "2026-05-10", sentDate: "2026-05-02", partsCount: 5, toolingValue: 178000, serialValuePA: 295000, estimatedToolingCost: 139000, marginPct: 21.9 },
+  { id: "rq12", rfqNo: "RFQ-2026-011", customerId: "c6",  description: "Faurecia Door Armrest Cover – 2 color variants",                 status: "COSTING",   requestDate: "2026-04-08", dueDate: "2026-05-20", partsCount: 2, toolingValue: 92000,  serialValuePA: 160000, estimatedToolingCost: 72000,  marginPct: 21.7,
+    costCalc: { material: "ABS", materialCostPerKg: 2.10, weightGrams: 165, cycleTimeSec: 42, cavities: 2, annualVolume: 120000, machineRatePerHr: 35, laborRatePerHr: 18, scrapPct: 1.8, packagingCostPerPart: 0.06, logisticsCostPerPart: 0.03, sgaPct: 8, targetMarginPct: 20 } },
+  { id: "rq13", rfqNo: "RFQ-2026-012", customerId: "c8",  description: "ZF Transmission Housing Cover – premium segment",                status: "COSTING",   requestDate: "2026-04-14", dueDate: "2026-05-28", partsCount: 1, toolingValue: 55000,  serialValuePA: 88000,  estimatedToolingCost: 43000,  marginPct: 21.8,
+    costCalc: { material: "PA66", materialCostPerKg: 3.20, weightGrams: 340, cycleTimeSec: 68, cavities: 1, annualVolume: 80000,  machineRatePerHr: 42, laborRatePerHr: 18, scrapPct: 2.5, packagingCostPerPart: 0.10, logisticsCostPerPart: 0.05, sgaPct: 8, targetMarginPct: 20 } },
+  { id: "rq14", rfqNo: "RFQ-2026-013", customerId: "c1",  description: "BMW Instrument Panel Center Section – new EV platform",          status: "DRAFT",     requestDate: "2026-04-25", dueDate: "2026-06-15", partsCount: 8, toolingValue: 420000, serialValuePA: 680000, estimatedToolingCost: 335000, marginPct: 20.2,
+    costCalc: { material: "PP+GF30", materialCostPerKg: 1.80, weightGrams: 460, cycleTimeSec: 95, cavities: 2, annualVolume: 250000, machineRatePerHr: 45, laborRatePerHr: 18, scrapPct: 2.0, packagingCostPerPart: 0.12, logisticsCostPerPart: 0.06, sgaPct: 8, targetMarginPct: 20 } },
+  { id: "rq15", rfqNo: "RFQ-2025-023", customerId: "c9",  description: "Aptiv Wiring Carrier Assembly – program cancelled by customer",  status: "CANCELLED", requestDate: "2025-12-01", dueDate: "2026-01-15", partsCount: 3, toolingValue: 72000,  serialValuePA: 120000, estimatedToolingCost: 58000,  marginPct: 19.4, lostReason: "Customer program cancelled" },
+];
+
+export const getInjectionPartById = (id: string) => INJECTION_PARTS.find(p => p.id === id);
+export const getPressByid = (id: string) => INJECTION_PRESSES.find(p => p.id === id);

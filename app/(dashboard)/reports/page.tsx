@@ -4,11 +4,12 @@ import {
   BarChart, Bar, LineChart, Line, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { Download, FileBarChart, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, FileBarChart } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { useSort, SortHead } from "@/hooks/use-sort";
 import { cn, formatCurrency, formatPct } from "@/lib/utils";
-import { FINANCIAL_PERIODS, TOOLING_PROJECTS, INJECTION_PARTS, CUSTOMERS, RFQS } from "@/data/seed-data";
+import { FINANCIAL_PERIODS, TOOLING_PROJECTS } from "@/data/seed-data";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -49,7 +50,6 @@ export default function ReportsPage() {
   const profitData = months.map(p => ({
     name: p.label,
     "Tooling GM%": p.toolingGMPct,
-    "Injection GM%": p.injectionGMPct,
     "EBITDA%": p.ebitdaPct,
     "Net Profit%": p.netProfitPct,
   }));
@@ -57,12 +57,10 @@ export default function ReportsPage() {
   // ── Revenue Report ──
   const revenueData = months.map(p => ({
     name: p.label,
-    Tooling: p.toolingRevenue,
-    Injection: p.injectionRevenue,
-    Total: p.revenue,
+    Revenue: p.toolingRevenue,
   }));
 
-  // ── RFQ Performance ──
+  // ── Quote Performance ──
   const rfqData = months.map(p => ({
     name: p.label,
     Sent: p.rfqSent,
@@ -79,24 +77,66 @@ export default function ReportsPage() {
     { status: "CANCELLED", count: TOOLING_PROJECTS.filter(p => p.status === "CANCELLED").length },
   ];
 
-  const riskData = [
-    { risk: "LOW", count: TOOLING_PROJECTS.filter(p => p.riskLevel === "LOW").length, color: "#10b981" },
-    { risk: "MEDIUM", count: TOOLING_PROJECTS.filter(p => p.riskLevel === "MEDIUM").length, color: "#f59e0b" },
-    { risk: "HIGH", count: TOOLING_PROJECTS.filter(p => p.riskLevel === "HIGH").length, color: "#f43f5e" },
-    { risk: "CRITICAL", count: TOOLING_PROJECTS.filter(p => p.riskLevel === "CRITICAL").length, color: "#7f1d1d" },
-  ];
-
-  // ── Customer P&L (injection) ──
-  const customerMap = new Map<string, { revenue: number; gp: number }>();
-  INJECTION_PARTS.forEach(p => {
-    const ex = customerMap.get(p.customer) ?? { revenue: 0, gp: 0 };
-    customerMap.set(p.customer, { revenue: ex.revenue + p.annualRevenue, gp: ex.gp + p.annualGrossProfit });
+  // ── Customer P&L (tooling) ──
+  const customerMap = new Map<string, { revenue: number; efc: number; count: number }>();
+  TOOLING_PROJECTS.forEach(p => {
+    const ex = customerMap.get(p.customer) ?? { revenue: 0, efc: 0, count: 0 };
+    customerMap.set(p.customer, {
+      revenue: ex.revenue + p.quotedRevenue,
+      efc: ex.efc + p.estimatedFinalCost,
+      count: ex.count + 1,
+    });
   });
   const customerPL = Array.from(customerMap.entries())
-    .map(([c, d]) => ({ customer: c, revenue: d.revenue, gp: d.gp, gmPct: (d.gp / d.revenue) * 100 }))
+    .map(([customer, d]) => ({
+      customer,
+      revenue: d.revenue,
+      efc: d.efc,
+      margin: d.revenue > 0 ? ((d.revenue - d.efc) / d.revenue) * 100 : 0,
+      projects: d.count,
+    }))
     .sort((a, b) => b.revenue - a.revenue);
 
-  // Tooling project summary for CSV
+  const RISK_ORDER_R: Record<string, number> = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  const profitSort = useSort();
+  const sortedMonths = profitSort.apply(months, {
+    Month: m => m.label,
+    Revenue: m => m.revenue,
+    "GM%": m => m.gmPct,
+    EBITDA: m => m.ebitda,
+    "EBITDA%": m => m.ebitdaPct,
+    "Net Profit": m => m.netProfit,
+  });
+  const quoteSort = useSort();
+  const sortedRfqData = quoteSort.apply(rfqData, {
+    Month: r => r.name,
+    Sent: r => r.Sent,
+    Won: r => r.Won,
+    Lost: r => r.Lost,
+    "Win Rate": r => r["Win Rate%"],
+  });
+  const projectReportSort = useSort();
+  const sortedAllProjects = projectReportSort.apply(TOOLING_PROJECTS, {
+    "Tool No": p => p.toolNo,
+    Customer: p => p.customer,
+    Description: p => p.description,
+    Quoted: p => p.quotedRevenue,
+    EFC: p => p.estimatedFinalCost,
+    Margin: p => p.quotedRevenue > 0 ? (p.quotedRevenue - p.estimatedFinalCost) / p.quotedRevenue * 100 : -100,
+    Done: p => p.completionPct,
+    ETA: p => p.eta,
+    Risk: p => RISK_ORDER_R[p.riskLevel] ?? 4,
+    Status: p => p.status,
+  });
+  const customerReportSort = useSort();
+  const sortedCustomerPL = customerReportSort.apply(customerPL, {
+    Customer: c => c.customer,
+    "Quoted Revenue": c => c.revenue,
+    "Est. Final Cost": c => c.efc,
+    "Margin%": c => c.margin,
+    Projects: c => c.projects,
+  });
+
   const projectCsvData = TOOLING_PROJECTS.map(p => ({
     toolNo: p.toolNo, customer: p.customer, service: p.serviceType,
     quotedRevenue: p.quotedRevenue, efc: p.estimatedFinalCost,
@@ -127,7 +167,6 @@ export default function ReportsPage() {
           </h1>
           <p className="text-sm text-muted-foreground">Exportable performance reports · April 2026</p>
         </div>
-        {/* Period selector */}
         <div className="flex items-center gap-1 bg-card border border-border rounded-lg p-1">
           {(["ytd", "12m", "24m"] as const).map(p => (
             <button
@@ -147,7 +186,7 @@ export default function ReportsPage() {
           {[
             { value: "profitability", label: "Profitability" },
             { value: "revenue", label: "Revenue" },
-            { value: "rfq", label: "RFQ Performance" },
+            { value: "quotes", label: "Quote Performance" },
             { value: "projects", label: "Project Status" },
             { value: "customers", label: "Customer P&L" },
           ].map(t => (
@@ -160,7 +199,7 @@ export default function ReportsPage() {
           <div className="rounded-xl border border-border bg-card p-5">
             <SectionHead
               title="Margin Trend"
-              sub="Tooling GM%, Injection GM%, EBITDA%, Net Profit%"
+              sub="Tooling GM%, EBITDA%, Net Profit%"
               onExport={() => downloadCsv(profitData, "profitability-report.csv")}
             />
             <ResponsiveContainer width="100%" height={260}>
@@ -171,7 +210,6 @@ export default function ReportsPage() {
                 <RTooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Line type="monotone" dataKey="Tooling GM%" stroke="#6366f1" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="Injection GM%" stroke="#10b981" strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="EBITDA%" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="5 2" />
                 <Line type="monotone" dataKey="Net Profit%" stroke="#06b6d4" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
               </LineChart>
@@ -181,7 +219,8 @@ export default function ReportsPage() {
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
               <p className="text-sm font-semibold">Monthly Profitability Detail</p>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => downloadCsv(months.map(p => ({ month: p.label, toolRev: p.toolingRevenue, injRev: p.injectionRevenue, total: p.revenue, gmPct: p.gmPct, ebitda: p.ebitda, ebitdaPct: p.ebitdaPct, netProfit: p.netProfit, netPct: p.netProfitPct })), "monthly-pl.csv")}>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8"
+                onClick={() => downloadCsv(months.map(p => ({ month: p.label, revenue: p.revenue, gmPct: p.gmPct, ebitda: p.ebitda, ebitdaPct: p.ebitdaPct, netProfit: p.netProfit, netPct: p.netProfitPct })), "monthly-pl.csv")}>
                 <Download className="w-3 h-3" /> CSV
               </Button>
             </div>
@@ -189,21 +228,17 @@ export default function ReportsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/20">
-                    {["Month", "Tool. Rev", "Inj. Rev", "Total", "Tool. GM%", "Inj. GM%", "Consol. GM%", "EBITDA", "EBITDA%", "Net Profit"].map(h => (
-                      <th key={h} className="text-right first:text-left py-2.5 px-3 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
+                    {(["Month", "Revenue", "GM%", "EBITDA", "EBITDA%", "Net Profit"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={profitSort} className="text-right first:text-left py-2.5 px-3 text-muted-foreground font-medium" />
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {months.map(p => (
+                  {sortedMonths.map(p => (
                     <tr key={p.month} className="border-b border-border/50 hover:bg-accent/20">
                       <td className="py-2 px-3 font-medium">{p.label}</td>
-                      <td className="py-2 px-3 tabular-nums text-right text-indigo-400">{formatCurrency(p.toolingRevenue)}</td>
-                      <td className="py-2 px-3 tabular-nums text-right text-emerald-400">{formatCurrency(p.injectionRevenue)}</td>
-                      <td className="py-2 px-3 tabular-nums text-right font-semibold">{formatCurrency(p.revenue)}</td>
-                      <td className={cn("py-2 px-3 tabular-nums text-right font-bold", p.toolingGMPct >= 35 ? "text-emerald-400" : "text-amber-400")}>{p.toolingGMPct.toFixed(1)}%</td>
-                      <td className={cn("py-2 px-3 tabular-nums text-right font-bold", p.injectionGMPct >= 23 ? "text-emerald-400" : "text-amber-400")}>{p.injectionGMPct.toFixed(1)}%</td>
-                      <td className={cn("py-2 px-3 tabular-nums text-right font-bold", p.gmPct >= 28 ? "text-emerald-400" : "text-amber-400")}>{p.gmPct.toFixed(1)}%</td>
+                      <td className="py-2 px-3 tabular-nums text-right font-semibold text-indigo-400">{formatCurrency(p.revenue)}</td>
+                      <td className={cn("py-2 px-3 tabular-nums text-right font-bold", p.gmPct >= 35 ? "text-emerald-400" : "text-amber-400")}>{p.gmPct.toFixed(1)}%</td>
                       <td className="py-2 px-3 tabular-nums text-right">{formatCurrency(p.ebitda)}</td>
                       <td className={cn("py-2 px-3 tabular-nums text-right font-bold", p.ebitdaPct >= 15 ? "text-emerald-400" : p.ebitdaPct >= 10 ? "text-amber-400" : "text-rose-400")}>{p.ebitdaPct.toFixed(1)}%</td>
                       <td className="py-2 px-3 tabular-nums text-right text-muted-foreground">{formatCurrency(p.netProfit)}</td>
@@ -219,32 +254,30 @@ export default function ReportsPage() {
         <TabsContent value="revenue" className="space-y-5">
           <div className="rounded-xl border border-border bg-card p-5">
             <SectionHead
-              title="Revenue by Business Line"
-              sub="Monthly tooling + injection"
+              title="Revenue Trend"
+              sub="Monthly tooling revenue"
               onExport={() => downloadCsv(revenueData, "revenue-report.csv")}
             />
             <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={revenueData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+              <BarChart data={revenueData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} interval={Math.max(0, Math.floor(months.length / 10) - 1)} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={v => `€${(v / 1000).toFixed(0)}k`} />
                 <RTooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Tooling" stackId="a" fill="#6366f1" opacity={0.9} />
-                <Bar dataKey="Injection" stackId="a" fill="#10b981" radius={[3, 3, 0, 0]} opacity={0.9} />
-                <Line type="monotone" dataKey="Total" stroke="#f59e0b" strokeWidth={2} dot={false} />
-              </ComposedChart>
+                <Bar dataKey="Revenue" fill="#6366f1" radius={[3, 3, 0, 0]} opacity={0.9} />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </TabsContent>
 
-        {/* ── RFQ PERFORMANCE ── */}
-        <TabsContent value="rfq" className="space-y-5">
+        {/* ── QUOTE PERFORMANCE ── */}
+        <TabsContent value="quotes" className="space-y-5">
           <div className="rounded-xl border border-border bg-card p-5">
             <SectionHead
-              title="RFQ Win/Loss Performance"
+              title="Quote Win/Loss Performance"
               sub="Monthly sent, won, lost, win rate"
-              onExport={() => downloadCsv(rfqData, "rfq-performance.csv")}
+              onExport={() => downloadCsv(rfqData, "quote-performance.csv")}
             />
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={rfqData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -263,22 +296,23 @@ export default function ReportsPage() {
 
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <p className="text-sm font-semibold">RFQ Detail Table</p>
-              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => downloadCsv(rfqData, "rfq-detail.csv")}>
+              <p className="text-sm font-semibold">Quote Detail Table</p>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => downloadCsv(rfqData, "quote-detail.csv")}>
                 <Download className="w-3 h-3" /> CSV
               </Button>
             </div>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  {["Month", "Sent", "Won", "Lost", "Win Rate", "MoM"].map(h => (
-                    <th key={h} className="text-right first:text-left py-2.5 px-4 text-muted-foreground font-medium">{h}</th>
+                  {(["Month", "Sent", "Won", "Lost", "Win Rate"] as const).map(h => (
+                    <SortHead key={h} label={h} sort={quoteSort} className="text-right first:text-left py-2.5 px-4 text-muted-foreground font-medium" />
                   ))}
+                  <th className="text-right py-2.5 px-4 text-muted-foreground font-medium">MoM</th>
                 </tr>
               </thead>
               <tbody>
-                {rfqData.map((row, i) => {
-                  const prev = i > 0 ? rfqData[i - 1]["Win Rate%"] : row["Win Rate%"];
+                {sortedRfqData.map((row, i) => {
+                  const prev = i > 0 ? sortedRfqData[i - 1]["Win Rate%"] : row["Win Rate%"];
                   const delta = row["Win Rate%"] - prev;
                   return (
                     <tr key={row.name} className="border-b border-border/50 hover:bg-accent/20">
@@ -333,13 +367,13 @@ export default function ReportsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/20">
-                    {["Tool No", "Customer", "Description", "Quoted", "EFC", "Margin", "Done", "ETA", "Risk", "Status"].map(h => (
-                      <th key={h} className="text-left py-2.5 px-3 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
+                    {(["Tool No", "Customer", "Description", "Quoted", "EFC", "Margin", "Done", "ETA", "Risk", "Status"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={projectReportSort} className="text-left py-2.5 px-3 text-muted-foreground font-medium" />
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {TOOLING_PROJECTS.map(p => {
+                  {sortedAllProjects.map(p => {
                     const margin = p.quotedRevenue > 0
                       ? ((p.quotedRevenue - p.estimatedFinalCost) / p.quotedRevenue) * 100 : null;
                     return (
@@ -384,49 +418,40 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
 
-        {/* ── CUSTOMER P&L ── */}
+        {/* ── CUSTOMER P&L (tooling) ── */}
         <TabsContent value="customers" className="space-y-5">
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <p className="text-sm font-semibold">Customer Profitability – Injection Molding</p>
+              <p className="text-sm font-semibold">Customer Profitability – Tooling</p>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8"
-                onClick={() => downloadCsv(customerPL.map(c => ({ customer: c.customer, annualRevenue: c.revenue, grossProfit: c.gp, gmpct: c.gmPct.toFixed(1) })), "customer-pl.csv")}>
+                onClick={() => downloadCsv(customerPL.map(c => ({ customer: c.customer, quotedRevenue: c.revenue, efc: c.efc, margin: c.margin.toFixed(1), projects: c.projects })), "customer-pl.csv")}>
                 <Download className="w-3 h-3" /> Export CSV
               </Button>
             </div>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  {["Customer", "Revenue", "Gross Profit", "GM%", "Trend", "Parts"].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-muted-foreground font-medium">{h}</th>
+                  {(["Customer", "Quoted Revenue", "Est. Final Cost", "Margin%", "Projects"] as const).map(h => (
+                    <SortHead key={h} label={h} sort={customerReportSort} className="text-left py-2.5 px-4 text-muted-foreground font-medium" />
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {customerPL.map(c => {
-                  const parts = INJECTION_PARTS.filter(p => p.customer === c.customer).length;
-                  const isGood = c.gmPct >= 22;
-                  return (
-                    <tr key={c.customer} className="border-b border-border/50 hover:bg-accent/20">
-                      <td className="py-2.5 px-4 font-semibold">{c.customer}</td>
-                      <td className="py-2.5 px-4 tabular-nums font-semibold">{formatCurrency(c.revenue)}</td>
-                      <td className="py-2.5 px-4 tabular-nums text-emerald-400">{formatCurrency(c.gp)}</td>
-                      <td className={cn("py-2.5 px-4 tabular-nums font-bold",
-                        c.gmPct >= 22 ? "text-emerald-400" : c.gmPct >= 18 ? "text-amber-400" : "text-rose-400")}>
-                        {c.gmPct.toFixed(1)}%
-                      </td>
-                      <td className="py-2.5 px-4">
-                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className={cn("h-full rounded-full", isGood ? "bg-emerald-500" : "bg-amber-500")}
-                            style={{ width: `${Math.min(c.gmPct / 30 * 100, 100)}%` }}
-                          />
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-4 text-muted-foreground">{parts} parts</td>
-                    </tr>
-                  );
-                })}
+                {sortedCustomerPL.map(c => (
+                  <tr key={c.customer} className="border-b border-border/50 hover:bg-accent/20">
+                    <td className="py-2.5 px-4 font-semibold">{c.customer}</td>
+                    <td className="py-2.5 px-4 tabular-nums font-semibold text-indigo-400">{c.revenue > 0 ? formatCurrency(c.revenue) : "—"}</td>
+                    <td className={cn("py-2.5 px-4 tabular-nums font-semibold",
+                      c.efc > c.revenue ? "text-rose-400" : "text-emerald-400")}>
+                      {formatCurrency(c.efc)}
+                    </td>
+                    <td className={cn("py-2.5 px-4 tabular-nums font-bold",
+                      c.margin >= 20 ? "text-emerald-400" : c.margin >= 10 ? "text-amber-400" : "text-rose-400")}>
+                      {c.revenue > 0 ? `${c.margin.toFixed(1)}%` : "—"}
+                    </td>
+                    <td className="py-2.5 px-4 text-muted-foreground">{c.projects}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

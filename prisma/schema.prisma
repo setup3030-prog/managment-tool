@@ -22,73 +22,15 @@ model Customer {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  rfqs          Rfq[]
   claims        Claim[]
   pipelineDeals PipelineDeal[]
 
   @@map("customers")
 }
 
-model Rfq {
-  id              String    @id @default(cuid())
-  rfqNumber       String    @unique @map("rfq_number")
-  customerId      String    @map("customer_id")
-  projectName     String    @map("project_name")
-  status          RfqStatus @default(NEW)
-  annualVolume    Float     @map("annual_volume")
-  currency        String    @default("EUR")
-
-  partWeight      Float     @map("part_weight")
-  material        String
-  cycleTime       Float     @map("cycle_time")
-  cavities        Int
-  scrapPct        Float     @map("scrap_pct")
-
-  materialCostPerKg  Float  @map("material_cost_per_kg")
-  machineRate        Float  @map("machine_rate")
-  laborCost          Float  @map("labor_cost")
-  packagingCost      Float  @map("packaging_cost")
-  logisticsCost      Float  @map("logistics_cost")
-  toolingCost        Float  @map("tooling_cost")
-  sgaPct             Float  @map("sga_pct")
-  targetMarginPct    Float  @map("target_margin_pct")
-
-  partCost        Float?    @map("part_cost")
-  salesPrice      Float?    @map("sales_price")
-  annualRevenue   Float?    @map("annual_revenue")
-  annualProfit    Float?    @map("annual_profit")
-  breakevenQty    Float?    @map("breakeven_qty")
-  grossMarginPct  Float?    @map("gross_margin_pct")
-
-  dueDate         DateTime? @map("due_date")
-  sentAt          DateTime? @map("sent_at")
-  wonAt           DateTime? @map("won_at")
-  lostAt          DateTime? @map("lost_at")
-  lostReason      String?   @map("lost_reason")
-  notes           String?
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-
-  customer        Customer  @relation(fields: [customerId], references: [id])
-  claims          Claim[]
-
-  @@map("rfqs")
-}
-
-enum RfqStatus {
-  NEW
-  COSTING
-  WAITING_FOR_SUPPLIER
-  SENT
-  NEGOTIATION
-  WON
-  LOST
-}
-
 model Claim {
   id          String      @id @default(cuid())
   customerId  String      @map("customer_id")
-  rfqId       String?     @map("rfq_id")
   title       String
   description String?
   status      ClaimStatus @default(OPEN)
@@ -100,7 +42,6 @@ model Claim {
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   customer    Customer    @relation(fields: [customerId], references: [id])
-  rfq         Rfq?        @relation(fields: [rfqId], references: [id])
 
   @@map("claims")
 }
@@ -140,24 +81,11 @@ model PipelineDeal {
 
 enum DealStage {
   LEAD
-  OPPORTUNITY
-  RFQ
-  QUOTATION_SENT
+  QUALIFIED
+  PROPOSAL
   NEGOTIATION
   WON
   LOST
-}
-
-model Material {
-  id          String   @id @default(cuid())
-  name        String
-  grade       String?
-  pricePerKg  Float    @map("price_per_kg")
-  supplier    String?
-  priceTrend  Json     @default("[]") @map("price_trend")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("materials")
 }
 
 model KpiSnapshot {
@@ -165,12 +93,10 @@ model KpiSnapshot {
   month           DateTime
   revenue         Float
   grossMarginPct  Float    @map("gross_margin_pct")
-  oeePct          Float    @map("oee_pct")
-  scrapPct        Float    @map("scrap_pct")
-  otdPct          Float    @map("otd_pct")
+  onTimeDelivery  Float?   @map("on_time_delivery")
   cashBalance     Float    @map("cash_balance")
-  rfqsWon         Int?     @map("rfqs_won")
-  rfqsLost        Int?     @map("rfqs_lost")
+  quotesWon       Int?     @map("quotes_won")
+  quotesLost      Int?     @map("quotes_lost")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@unique([month])
@@ -181,7 +107,7 @@ model UserProfile {
   id          String   @id
   email       String   @unique
   fullName    String?  @map("full_name")
-  role        UserRole @default(SALES)
+  role        UserRole @default(ENGINEER)
   avatarUrl   String?  @map("avatar_url")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -202,10 +128,8 @@ model AppSettings {
   defaultCurrency   String   @default("EUR") @map("default_currency")
   targetMarginPct   Float    @default(17) @map("target_margin_pct")
   warningMarginPct  Float    @default(12) @map("warning_margin_pct")
-  targetOeePct      Float    @default(85) @map("target_oee_pct")
   targetOtdPct      Float    @default(95) @map("target_otd_pct")
-  maxScrapPct       Float    @default(2.5) @map("max_scrap_pct")
-  rfqExpiryDays     Int      @default(30) @map("rfq_expiry_days")
+  quoteExpiryDays   Int      @default(30) @map("quote_expiry_days")
   companyName       String   @default("Shapers") @map("company_name")
   updatedAt         DateTime @updatedAt @map("updated_at")
 

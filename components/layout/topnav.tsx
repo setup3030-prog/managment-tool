@@ -117,15 +117,15 @@ export function TopNav() {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-lg hover:bg-accent px-2 py-1.5 transition-colors">
                 <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-indigo-500/20 text-indigo-300 text-xs font-bold">TK</AvatarFallback>
+                  <AvatarFallback className="bg-indigo-500/20 text-indigo-300 text-xs font-bold">BZ</AvatarFallback>
                 </Avatar>
-                <span className="hidden lg:block text-sm font-medium">Thomas Keller</span>
+                <span className="hidden lg:block text-sm font-medium">Bartlomiej Zarski</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
-                <p className="font-medium">Thomas Keller</p>
-                <p className="text-xs text-muted-foreground font-normal">thomas.keller@shapers.eu</p>
+                <p className="font-medium">Bartlomiej Zarski</p>
+                <p className="text-xs text-muted-foreground font-normal">bartlomiej.zarski@shapers.eu</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/settings")}>Settings</DropdownMenuItem>

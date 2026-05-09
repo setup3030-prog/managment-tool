@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Item \"C:\\\\Users\\\\User\\\\Desktop\\\\AAAplikacje\\\\TOOL only\\\\ORG Chart\\\\frontend\" -Force | Get-ChildItem -Force -Recurse | Where-Object {$_.PSIsContainer -eq $false} | Select-Object FullName, Length | Sort-Object FullName | head -100)"
+    ]
+  }
+}

@@ -1,264 +1,480 @@
 "use client";
 import { useState } from "react";
-import { ShoppingCart, Plus, Search, Download } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  BarChart, Bar, ComposedChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, Legend,
+} from "recharts";
+import { TrendingUp, TrendingDown, Target, Plus, Trash2, CheckCircle, XCircle, Clock, Send } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn, formatCurrency } from "@/lib/utils";
-import { RFQS, PIPELINE_DEALS, INJECTION_RFQS, getCustomerById, CUSTOMERS } from "@/data/seed-data";
-import type { DealStage, RfqStatus } from "@/types";
+import { FINANCIAL_PERIODS, PIPELINE_DEALS, getCustomerById, CUSTOMERS } from "@/data/seed-data";
+import { useData } from "@/context/data-context";
+import { useSort, SortHead } from "@/hooks/use-sort";
+import { RfqKanbanBoard } from "@/components/rfq/rfq-kanban-board";
+import type { RfqStatus } from "@/types";
 
-const STAGES: DealStage[] = ["LEAD", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"];
-const STAGE_LABELS: Record<DealStage, string> = {
-  LEAD: "Lead", QUALIFIED: "Qualified", PROPOSAL: "Proposal",
-  NEGOTIATION: "Negotiation", WON: "Won", LOST: "Lost",
-};
-const STAGE_COLOR: Record<DealStage, string> = {
-  LEAD: "bg-slate-500/15 text-slate-400 border-slate-500/20",
-  QUALIFIED: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  PROPOSAL: "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
-  NEGOTIATION: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-  WON: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-  LOST: "bg-rose-500/15 text-rose-400 border-rose-500/20",
-};
 const RFQ_STATUS_COLOR: Record<RfqStatus, string> = {
-  NEW: "bg-slate-500/10 text-slate-400",
-  COSTING: "bg-blue-500/10 text-blue-400",
-  WAITING_FOR_SUPPLIER: "bg-amber-500/10 text-amber-400",
-  SENT: "bg-indigo-500/10 text-indigo-400",
-  NEGOTIATION: "bg-amber-500/10 text-amber-400",
-  WON: "bg-emerald-500/10 text-emerald-400",
-  LOST: "bg-rose-500/10 text-rose-400",
+  DRAFT:     "bg-slate-500/10 text-slate-400",
+  COSTING:   "bg-indigo-500/10 text-indigo-400",
+  SENT:      "bg-amber-500/10 text-amber-400",
+  WON:       "bg-emerald-500/10 text-emerald-400",
+  LOST:      "bg-rose-500/10 text-rose-400",
+  CANCELLED: "bg-slate-500/10 text-slate-400",
 };
 
-const SERVICE_LABELS: Record<string, string> = {
-  NEW_TOOL: "New Tool",
-  WARRANTY_REPAIR: "Warranty",
-  PAID_REPAIR: "Paid Repair",
-  MODIFICATION_ECO: "ECO/Mod",
-  CHINA_TRANSFER: "China Transfer",
-  SPARE_PARTS: "Spare Parts",
+const RFQ_STATUS_ICON: Record<RfqStatus, React.ReactNode> = {
+  DRAFT:     <Clock className="w-3 h-3" />,
+  COSTING:   <Target className="w-3 h-3" />,
+  SENT:      <Send className="w-3 h-3" />,
+  WON:       <CheckCircle className="w-3 h-3" />,
+  LOST:      <XCircle className="w-3 h-3" />,
+  CANCELLED: <XCircle className="w-3 h-3" />,
 };
+
+const DEAL_STAGE_COLOR: Record<string, string> = {
+  LEAD:        "bg-slate-500/10 text-slate-400",
+  QUALIFIED:   "bg-indigo-500/10 text-indigo-400",
+  PROPOSAL:    "bg-amber-500/10 text-amber-400",
+  NEGOTIATION: "bg-violet-500/10 text-violet-400",
+  WON:         "bg-emerald-500/10 text-emerald-400",
+  LOST:        "bg-rose-500/10 text-rose-400",
+};
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-popover border border-border rounded-lg shadow-xl p-3 text-xs min-w-[140px]">
+      <p className="font-semibold mb-2 text-foreground">{label}</p>
+      {payload.map((p: any) => (
+        <div key={p.name} className="flex items-center justify-between gap-3">
+          <span style={{ color: p.color }}>{p.name}</span>
+          <span className="font-medium text-foreground">
+            {p.name.includes("%") ? `${p.value}%` : p.value > 1000 ? formatCurrency(p.value) : p.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+function KpiTile({ label, value, sub, trend, color = "default" }: {
+  label: string; value: string; sub?: string; trend?: number; color?: string;
+}) {
+  const bg: Record<string, string> = {
+    default: "bg-card border-border",
+    green:   "bg-emerald-500/5 border-emerald-500/15",
+    amber:   "bg-amber-500/5 border-amber-500/15",
+    rose:    "bg-rose-500/5 border-rose-500/15",
+    indigo:  "bg-indigo-500/5 border-indigo-500/15",
+    violet:  "bg-violet-500/5 border-violet-500/15",
+  };
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className={cn("rounded-xl border p-4", bg[color] ?? bg.default)}>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xl font-bold">{value}</p>
+      {trend !== undefined ? (
+        <span className={cn("text-xs flex items-center gap-0.5 mt-1", trend >= 0 ? "text-emerald-400" : "text-rose-400")}>
+          {trend >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+          {trend >= 0 ? "+" : ""}{trend.toFixed(1)}% MoM
+        </span>
+      ) : sub ? (
+        <p className="text-[10px] text-muted-foreground mt-1">{sub}</p>
+      ) : null}
+    </motion.div>
+  );
+}
 
 export default function SalesPage() {
-  const [search, setSearch] = useState("");
+  const { rfqs, deleteRfq } = useData();
   const [statusFilter, setStatusFilter] = useState<RfqStatus | "ALL">("ALL");
 
-  const enrichedDeals = PIPELINE_DEALS.map(d => ({
-    ...d,
-    customerName: getCustomerById(d.customerId)?.name ?? d.customerId,
+  // ── RFQ KPIs ──
+  const wonRfqs   = rfqs.filter(r => r.status === "WON");
+  const lostRfqs  = rfqs.filter(r => r.status === "LOST");
+  const sentRfqs  = rfqs.filter(r => r.status === "SENT");
+  const activeRfqs = rfqs.filter(r => ["DRAFT", "COSTING", "SENT"].includes(r.status));
+  const decided   = wonRfqs.length + lostRfqs.length;
+  const winRate   = decided > 0 ? (wonRfqs.length / decided) * 100 : 0;
+  const wonValue  = wonRfqs.reduce((s, r) => s + r.toolingValue, 0);
+  const pipelineValue = sentRfqs.reduce((s, r) => s + r.toolingValue, 0);
+
+  // ── Pipeline (CRM) data ──
+  const openDeals = PIPELINE_DEALS.filter(d => !["WON", "LOST"].includes(d.stage));
+  const dealsByStage = ["LEAD", "QUALIFIED", "PROPOSAL", "NEGOTIATION"].map(stage => ({
+    stage,
+    count: PIPELINE_DEALS.filter(d => d.stage === stage).length,
+    value: PIPELINE_DEALS.filter(d => d.stage === stage).reduce((s, d) => s + d.value, 0),
+  }));
+  const totalPipeline = openDeals.reduce((s, d) => s + d.value, 0);
+
+  // ── Monthly performance chart ──
+  const perfData = FINANCIAL_PERIODS.slice(-12).map(fp => ({
+    name: fp.label,
+    Won: fp.rfqWon,
+    Lost: fp.rfqLost,
+    "Win Rate%": fp.rfqSent > 0 ? Math.round((fp.rfqWon / fp.rfqSent) * 100) : 0,
   }));
 
-  const filteredRfqs = RFQS.filter(r => {
-    const customer = getCustomerById(r.customerId);
-    const matchSearch = !search ||
-      r.partName.toLowerCase().includes(search.toLowerCase()) ||
-      customer?.name.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "ALL" || r.status === statusFilter;
-    return matchSearch && matchStatus;
-  }).map(r => ({ ...r, customer: getCustomerById(r.customerId) }));
+  // ── Customer revenue breakdown ──
+  const customerRevMap = new Map<string, { tooling: number; serial: number; won: number; total: number }>();
+  wonRfqs.forEach(r => {
+    const ex = customerRevMap.get(r.customerId) ?? { tooling: 0, serial: 0, won: 0, total: 0 };
+    customerRevMap.set(r.customerId, {
+      tooling: ex.tooling + r.toolingValue,
+      serial:  ex.serial + r.serialValuePA,
+      won:     ex.won + 1,
+      total:   ex.total + r.toolingValue + r.serialValuePA,
+    });
+  });
+  const customerRevData = Array.from(customerRevMap.entries())
+    .map(([customerId, d]) => ({ customerId, customer: getCustomerById(customerId)?.shortName ?? customerId, ...d }))
+    .sort((a, b) => b.total - a.total);
 
-  const pipelineValue = enrichedDeals
-    .filter(d => !["WON", "LOST"].includes(d.stage))
-    .reduce((s, d) => s + d.value, 0);
-  const wonValue = enrichedDeals.filter(d => d.stage === "WON").reduce((s, d) => s + d.value, 0);
-  const weightedPipeline = enrichedDeals
-    .filter(d => !["WON", "LOST"].includes(d.stage))
-    .reduce((s, d) => s + d.value * (d.probability / 100), 0);
+  // ── Filtered RFQs ──
+  const filteredRfqs = statusFilter === "ALL" ? rfqs : rfqs.filter(r => r.status === statusFilter);
 
-  const rfqWon = RFQS.filter(r => r.status === "WON").length;
-  const rfqLost = RFQS.filter(r => r.status === "LOST").length;
-  const winRate = (rfqWon + rfqLost) > 0 ? (rfqWon / (rfqWon + rfqLost)) * 100 : 0;
+  // ── Sort ──
+  const rfqSort    = useSort();
+  const dealSort   = useSort();
+  const custSort   = useSort();
+  const sortedRfqs = rfqSort.apply(filteredRfqs, {
+    "RFQ No":    r => r.rfqNo,
+    Customer:    r => getCustomerById(r.customerId)?.shortName ?? r.customerId,
+    Description: r => r.description,
+    "Tooling €": r => r.toolingValue,
+    "Serial PA": r => r.serialValuePA,
+    "Margin%":   r => r.marginPct,
+    Parts:       r => r.partsCount,
+    Due:         r => r.dueDate,
+    Status:      r => r.status,
+  });
+  const sortedDeals = dealSort.apply(openDeals, {
+    Customer:    d => getCustomerById(d.customerId)?.shortName ?? d.customerId,
+    Deal:        d => d.title,
+    Value:       d => d.value,
+    Probability: d => d.probability,
+    Stage:       d => d.stage,
+    "Close Date": d => d.expectedClose,
+  });
+  const sortedCustomers = custSort.apply(customerRevData, {
+    Customer:    c => c.customer,
+    "Tooling €": c => c.tooling,
+    "Serial PA": c => c.serial,
+    "Won RFQs":  c => c.won,
+    Total:       c => c.total,
+  });
+
+  const STATUS_FILTERS: (RfqStatus | "ALL")[] = ["ALL", "DRAFT", "COSTING", "SENT", "WON", "LOST", "CANCELLED"];
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-indigo-400" /> Sales / RFQ
+            <Target className="w-6 h-6 text-indigo-400" /> Sales / RFQ
           </h1>
-          <p className="text-sm text-muted-foreground">Tooling pipeline · Injection RFQs · CRM</p>
+          <p className="text-sm text-muted-foreground">Pipeline & quotation management · April 2026</p>
         </div>
-        <Button size="sm" className="gap-1.5" onClick={() => window.location.href = "/rfq/new"}>
-          <Plus className="w-3.5 h-3.5" /> New RFQ
-        </Button>
       </div>
 
       {/* KPI Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Pipeline Value", value: formatCurrency(pipelineValue), sub: "Open opportunities", color: "indigo" },
-          { label: "Weighted Pipeline", value: formatCurrency(weightedPipeline), sub: "Probability-adjusted", color: "default" },
-          { label: "Won YTD", value: formatCurrency(wonValue), sub: `${rfqWon} orders`, color: "green" },
-          { label: "RFQ Win Rate", value: `${winRate.toFixed(1)}%`, sub: `${rfqWon}W / ${rfqLost}L`, color: winRate >= 60 ? "green" : "amber" },
-        ].map(k => (
-          <div key={k.label} className={cn("rounded-xl border p-4",
-            k.color === "indigo" ? "border-indigo-500/15 bg-indigo-500/5" :
-            k.color === "green" ? "border-emerald-500/15 bg-emerald-500/5" :
-            k.color === "amber" ? "border-amber-500/15 bg-amber-500/5" :
-            "border-border bg-card")}>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{k.label}</p>
-            <p className="text-xl font-bold">{k.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{k.sub}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <KpiTile label="Open RFQs"       value={`${activeRfqs.length}`}                   sub="Draft + Costing + Sent" color="indigo" />
+        <KpiTile label="Sent / Pending"  value={`${sentRfqs.length}`}                     sub="Awaiting decision" color="amber" />
+        <KpiTile label="Win Rate YTD"    value={`${winRate.toFixed(1)}%`}                  sub={`${wonRfqs.length}W / ${lostRfqs.length}L`} color={winRate >= 60 ? "green" : winRate >= 45 ? "amber" : "rose"} />
+        <KpiTile label="Won Value YTD"   value={formatCurrency(wonValue)}                  sub="Tooling value" color="green" />
+        <KpiTile label="Pipeline Value"  value={formatCurrency(pipelineValue)}             sub="Sent & pending" color="violet" />
+        <KpiTile label="CRM Pipeline"    value={formatCurrency(totalPipeline)}             sub={`${openDeals.length} open deals`} color="default" />
       </div>
 
       <Tabs defaultValue="kanban" className="w-full">
-        <TabsList className="bg-card border border-border mb-6 p-1 h-auto gap-1">
-          <TabsTrigger value="kanban" className="text-xs px-3 py-1.5">CRM Kanban</TabsTrigger>
-          <TabsTrigger value="rfq" className="text-xs px-3 py-1.5">Tooling RFQs</TabsTrigger>
-          <TabsTrigger value="injection" className="text-xs px-3 py-1.5">Injection RFQs</TabsTrigger>
+        <TabsList className="bg-card border border-border w-full justify-start mb-4 p-1 h-auto flex-wrap gap-1">
+          {[
+            { value: "kanban",      label: "A · Kanban Board" },
+            { value: "rfq",         label: "B · RFQ Tracker" },
+            { value: "pipeline",    label: "C · CRM Pipeline" },
+            { value: "performance", label: "D · Performance" },
+            { value: "customers",   label: "E · Customers" },
+          ].map(t => (
+            <TabsTrigger key={t.value} value={t.value} className="text-xs px-3 py-1.5">{t.label}</TabsTrigger>
+          ))}
         </TabsList>
 
-        {/* ── KANBAN ── */}
+        {/* ── A: KANBAN BOARD ── */}
         <TabsContent value="kanban">
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 overflow-x-auto">
-            {STAGES.map(stage => {
-              const deals = enrichedDeals.filter(d => d.stage === stage);
-              const stageValue = deals.reduce((s, d) => s + d.value, 0);
-              return (
-                <div key={stage} className="min-w-[180px]">
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full border", STAGE_COLOR[stage])}>
-                      {STAGE_LABELS[stage]}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{deals.length}</span>
-                  </div>
-                  {stageValue > 0 && (
-                    <p className="text-[10px] text-muted-foreground px-1 mb-2">{formatCurrency(stageValue)}</p>
-                  )}
-                  <div className="space-y-2">
-                    {deals.map(deal => (
-                      <div key={deal.id} className="rounded-lg border border-border bg-card p-3 hover:bg-accent/30 transition-colors cursor-pointer">
-                        <p className="text-xs font-semibold leading-tight mb-1">{deal.title}</p>
-                        <p className="text-[10px] text-muted-foreground mb-2">{deal.customerName}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-indigo-400">{formatCurrency(deal.value)}</span>
-                          <span className="text-[10px] text-muted-foreground">{deal.probability}%</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">Close: {deal.expectedClose}</p>
-                      </div>
-                    ))}
-                    {deals.length === 0 && (
-                      <div className="rounded-lg border border-dashed border-border p-4 text-center">
-                        <p className="text-[10px] text-muted-foreground/50">No deals</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <RfqKanbanBoard />
         </TabsContent>
 
-        {/* ── TOOLING RFQs ── */}
+        {/* ── B: RFQ TRACKER ── */}
         <TabsContent value="rfq" className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search RFQs..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9 h-9 text-sm"
-              />
-            </div>
-            <div className="flex gap-1.5 flex-wrap">
-              {(["ALL", "NEW", "COSTING", "SENT", "NEGOTIATION", "WON", "LOST"] as const).map(s => (
+          {/* Status summary */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {STATUS_FILTERS.map(s => {
+              const count = s === "ALL" ? rfqs.length : rfqs.filter(r => r.status === s).length;
+              return (
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={cn("text-[10px] px-2.5 py-1 rounded-full border transition-colors",
-                    statusFilter === s ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "border-border text-muted-foreground hover:bg-accent")}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors",
+                    statusFilter === s
+                      ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-300"
+                      : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  )}
                 >
-                  {s}
+                  {s !== "ALL" && RFQ_STATUS_ICON[s as RfqStatus]}
+                  {s} <span className="font-bold">{count}</span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/20">
-                  {["Customer", "Part / Project", "Service", "Value", "Status", "Submitted"].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-muted-foreground font-medium">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRfqs.map(r => (
-                  <tr key={r.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
-                    <td className="py-2.5 px-4 font-medium">{r.customer?.name ?? r.customerId}</td>
-                    <td className="py-2.5 px-4 text-muted-foreground">{r.partName}</td>
-                    <td className="py-2.5 px-4">
-                      <span className="bg-indigo-500/10 text-indigo-400 text-[10px] px-1.5 py-0.5 rounded">
-                        {SERVICE_LABELS[r.service ?? "NEW_TOOL"] ?? r.service}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 font-semibold tabular-nums">{r.value ? formatCurrency(r.value) : "—"}</td>
-                    <td className="py-2.5 px-4">
-                      <span className={cn("text-[10px] px-2 py-0.5 rounded-full", RFQ_STATUS_COLOR[r.status])}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-muted-foreground">{r.submittedDate ?? "—"}</td>
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+              <p className="text-sm font-semibold">
+                {statusFilter === "ALL" ? "All RFQs" : `RFQs – ${statusFilter}`}
+                <span className="ml-2 text-xs text-muted-foreground font-normal">({sortedRfqs.length})</span>
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20">
+                    {(["RFQ No", "Customer", "Description", "Parts", "Tooling €", "Serial PA", "Margin%", "Due", "Status"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={rfqSort} className="text-left py-2.5 px-3 text-muted-foreground font-medium" />
+                    ))}
+                    <th className="py-2.5 px-3 w-8" />
                   </tr>
-                ))}
-                {filteredRfqs.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
-                      No RFQs match your filters
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedRfqs.map(rfq => {
+                    const customer = getCustomerById(rfq.customerId);
+                    return (
+                      <tr key={rfq.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-semibold text-indigo-400">{rfq.rfqNo}</td>
+                        <td className="py-2.5 px-3 font-medium whitespace-nowrap">{customer?.shortName ?? rfq.customerId}</td>
+                        <td className="py-2.5 px-3 text-muted-foreground max-w-[220px]">
+                          <p className="truncate">{rfq.description}</p>
+                          {rfq.lostReason && (
+                            <p className="text-[10px] text-rose-400 mt-0.5">↳ {rfq.lostReason}</p>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 tabular-nums text-center">{rfq.partsCount}</td>
+                        <td className="py-2.5 px-3 tabular-nums font-semibold">{formatCurrency(rfq.toolingValue)}</td>
+                        <td className="py-2.5 px-3 tabular-nums text-muted-foreground">{formatCurrency(rfq.serialValuePA)}/yr</td>
+                        <td className={cn("py-2.5 px-3 tabular-nums font-bold",
+                          rfq.marginPct >= 22 ? "text-emerald-400" : rfq.marginPct >= 18 ? "text-amber-400" : "text-rose-400")}>
+                          {rfq.marginPct.toFixed(1)}%
+                        </td>
+                        <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap">{rfq.dueDate}</td>
+                        <td className="py-2.5 px-3">
+                          <span className={cn("inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full", RFQ_STATUS_COLOR[rfq.status])}>
+                            {RFQ_STATUS_ICON[rfq.status]}
+                            {rfq.status}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-rose-400/50 hover:text-rose-400"
+                            onClick={() => { if (confirm("Delete RFQ?")) deleteRfq(rfq.id); }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </TabsContent>
 
-        {/* ── INJECTION RFQs ── */}
-        <TabsContent value="injection" className="space-y-4">
+        {/* ── B: CRM PIPELINE ── */}
+        <TabsContent value="pipeline" className="space-y-6">
+          {/* Stage summary cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {dealsByStage.map(stage => (
+              <div key={stage.stage} className="rounded-xl border border-border bg-card p-4">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{stage.stage}</p>
+                <p className="text-xl font-bold mt-1">{stage.count}</p>
+                <p className="text-xs text-indigo-400 font-semibold mt-1">{formatCurrency(stage.value)}</p>
+              </div>
+            ))}
+          </div>
+
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-              <p className="text-sm font-semibold">Injection Molding RFQ Pipeline</p>
-              <p className="text-xs text-muted-foreground">
-                {INJECTION_RFQS.filter(r => r.status === "WON").length} won ·{" "}
-                {INJECTION_RFQS.filter(r => !["WON", "LOST"].includes(r.status)).length} open
-              </p>
+            <div className="px-5 py-4 border-b border-border">
+              <p className="text-sm font-semibold">Open Deal Pipeline</p>
             </div>
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/20">
-                  {["Customer", "Part Name", "Segment", "Volume/yr", "Quoted Price", "Annual Rev", "Margin%", "Status", "Decision"].map(h => (
-                    <th key={h} className="text-left py-2.5 px-4 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {INJECTION_RFQS.map(r => (
-                  <tr key={r.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
-                    <td className="py-2.5 px-4 font-medium">{r.customer}</td>
-                    <td className="py-2.5 px-4 text-muted-foreground max-w-[160px] truncate">{r.partName}</td>
-                    <td className="py-2.5 px-4">
-                      <Badge variant="outline" className="text-[10px]">{r.segment}</Badge>
-                    </td>
-                    <td className="py-2.5 px-4 tabular-nums">{(r.annualVolume / 1000).toFixed(0)}k</td>
-                    <td className="py-2.5 px-4 tabular-nums font-semibold">€{r.quotedUnitPrice.toFixed(3)}</td>
-                    <td className="py-2.5 px-4 tabular-nums text-indigo-400">{formatCurrency(r.annualRevenuePotential)}</td>
-                    <td className="py-2.5 px-4 tabular-nums text-emerald-400 font-semibold">{r.targetMarginPct}%</td>
-                    <td className="py-2.5 px-4">
-                      <span className={cn("text-[10px] px-2 py-0.5 rounded-full", RFQ_STATUS_COLOR[r.status])}>
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-muted-foreground">{r.decisionDate ?? "—"}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20">
+                    {(["Customer", "Deal", "Value", "Probability", "Stage", "Close Date"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={dealSort} className="text-left py-2 px-3 text-muted-foreground font-medium" />
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedDeals.map(d => (
+                    <tr key={d.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                      <td className="py-2 px-3 font-medium">{getCustomerById(d.customerId)?.shortName ?? d.customerId}</td>
+                      <td className="py-2 px-3 text-muted-foreground max-w-[240px]">
+                        <p className="truncate">{d.title}</p>
+                      </td>
+                      <td className="py-2 px-3 font-semibold">{formatCurrency(d.value)}</td>
+                      <td className="py-2 px-3 tabular-nums">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1 w-16 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500" style={{ width: `${d.probability}%` }} />
+                          </div>
+                          <span>{d.probability}%</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-3">
+                        <Badge variant="outline" className={cn("text-[10px]", DEAL_STAGE_COLOR[d.stage])}>{d.stage}</Badge>
+                      </td>
+                      <td className="py-2 px-3 text-muted-foreground">{d.expectedClose}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ── C: PERFORMANCE ── */}
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="text-sm font-semibold mb-1">Monthly Win / Loss</p>
+              <p className="text-xs text-muted-foreground mb-4">RFQ decisions last 12 months</p>
+              <ResponsiveContainer width="100%" height={220}>
+                <ComposedChart data={perfData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} interval={2} />
+                  <YAxis yAxisId="l" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} domain={[0, 100]} />
+                  <RTooltip content={<CustomTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar yAxisId="l" dataKey="Won"  fill="#10b981" radius={[3, 3, 0, 0]} />
+                  <Bar yAxisId="l" dataKey="Lost" fill="#f43f5e" radius={[3, 3, 0, 0]} />
+                  <Line yAxisId="r" type="monotone" dataKey="Win Rate%" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-5">
+              <p className="text-sm font-semibold mb-1">RFQ Value by Status</p>
+              <p className="text-xs text-muted-foreground mb-4">Tooling value breakdown · all time</p>
+              <div className="space-y-3 mt-4">
+                {(["WON", "LOST", "SENT", "COSTING", "DRAFT", "CANCELLED"] as RfqStatus[]).map(status => {
+                  const items = rfqs.filter(r => r.status === status);
+                  const val   = items.reduce((s, r) => s + r.toolingValue, 0);
+                  const total = rfqs.reduce((s, r) => s + r.toolingValue, 0);
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={status}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={cn("inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full", RFQ_STATUS_COLOR[status])}>
+                          {RFQ_STATUS_ICON[status]}{status}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">{items.length} RFQs</span>
+                          <span className="text-xs font-semibold">{formatCurrency(val)}</span>
+                        </div>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full rounded-full"
+                          style={{
+                            width: `${total > 0 ? (val / total) * 100 : 0}%`,
+                            background: status === "WON" ? "#10b981" : status === "LOST" ? "#f43f5e" : status === "SENT" ? "#f59e0b" : "#6366f1",
+                          }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ── D: CUSTOMERS ── */}
+        <TabsContent value="customers" className="space-y-4">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <p className="text-sm font-semibold">Customer Revenue – Won RFQs</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20">
+                    {(["Customer", "Tooling €", "Serial PA", "Won RFQs", "Total"] as const).map(h => (
+                      <SortHead key={h} label={h} sort={custSort} className="text-left py-2.5 px-4 text-muted-foreground font-medium" />
+                    ))}
+                    <th className="text-left py-2.5 px-4 text-muted-foreground font-medium">Revenue Share</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedCustomers.map(c => {
+                    const totalAll = customerRevData.reduce((s, x) => s + x.total, 0);
+                    const share = totalAll > 0 ? (c.total / totalAll) * 100 : 0;
+                    return (
+                      <tr key={c.customerId} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
+                        <td className="py-3 px-4 font-semibold">{c.customer}</td>
+                        <td className="py-3 px-4 tabular-nums font-semibold text-indigo-400">{formatCurrency(c.tooling)}</td>
+                        <td className="py-3 px-4 tabular-nums text-muted-foreground">{formatCurrency(c.serial)}/yr</td>
+                        <td className="py-3 px-4 tabular-nums text-center">{c.won}</td>
+                        <td className="py-3 px-4 tabular-nums font-bold">{formatCurrency(c.total)}</td>
+                        <td className="py-3 px-4 min-w-[140px]">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${share}%` }} />
+                            </div>
+                            <span className="text-[10px] text-muted-foreground w-8">{share.toFixed(0)}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* All customers overview */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <p className="text-sm font-semibold">All Customers – Profile</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/20">
+                    {["Customer", "Country", "Segment", "Credit Limit", "Payment Terms", "Contact"].map(h => (
+                      <th key={h} className="text-left py-2.5 px-3 text-muted-foreground font-medium">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CUSTOMERS.map(c => (
+                    <tr key={c.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
+                      <td className="py-2.5 px-3 font-semibold">{c.name}</td>
+                      <td className="py-2.5 px-3">
+                        <span className="text-[10px] bg-slate-500/10 text-slate-400 px-1.5 py-0.5 rounded">{c.country}</span>
+                      </td>
+                      <td className="py-2.5 px-3 text-muted-foreground">{c.segment}</td>
+                      <td className="py-2.5 px-3 tabular-nums">{c.creditLimit ? formatCurrency(c.creditLimit) : "—"}</td>
+                      <td className="py-2.5 px-3 text-muted-foreground">{c.paymentTerms ? `${c.paymentTerms} days` : "—"}</td>
+                      <td className="py-2.5 px-3 text-muted-foreground">{c.contacts[0]?.name ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

@@ -4,24 +4,18 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, Legend,
   AreaChart, Area,
 } from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { DollarSign, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency, formatPct } from "@/lib/utils";
 import { FINANCIAL_PERIODS } from "@/data/seed-data";
 import { useData } from "@/context/data-context";
 import { CashFlowForm } from "@/components/forms/cashflow-form";
 import { useState } from "react";
+import { useSort, SortHead } from "@/hooks/use-sort";
 
 const CURRENT = FINANCIAL_PERIODS[FINANCIAL_PERIODS.length - 1];
-const PREV = FINANCIAL_PERIODS[FINANCIAL_PERIODS.length - 2];
 
 const ytd = FINANCIAL_PERIODS.filter(p => p.month.startsWith("2026"));
-const ytdToolRev = ytd.reduce((s, p) => s + p.toolingRevenue, 0);
-const ytdToolGP = ytd.reduce((s, p) => s + p.toolingGP, 0);
-const ytdToolEBITDA = ytd.reduce((s, p) => s + p.toolingEBITDA, 0);
-const ytdInjRev = ytd.reduce((s, p) => s + p.injectionRevenue, 0);
-const ytdInjGP = ytd.reduce((s, p) => s + p.injectionGP, 0);
-const ytdInjEBITDA = ytd.reduce((s, p) => s + p.injectionEBITDA, 0);
 const ytdRev = ytd.reduce((s, p) => s + p.revenue, 0);
 const ytdGP = ytd.reduce((s, p) => s + p.grossProfit, 0);
 const ytdEBITDA = ytd.reduce((s, p) => s + p.ebitda, 0);
@@ -57,15 +51,12 @@ function PLCard({
   ];
   const borderCol: Record<string, string> = {
     indigo: "border-indigo-500/20",
-    emerald: "border-emerald-500/20",
     violet: "border-violet-500/20",
   };
   return (
     <div className={cn("rounded-xl border bg-card p-5", borderCol[color] ?? "border-border")}>
       <div className={cn("text-xs font-bold uppercase tracking-widest mb-4 pb-2 border-b",
-        color === "indigo" ? "text-indigo-400 border-indigo-500/20" :
-        color === "emerald" ? "text-emerald-400 border-emerald-500/20" :
-        "text-violet-400 border-violet-500/20")}>
+        color === "indigo" ? "text-indigo-400 border-indigo-500/20" : "text-violet-400 border-violet-500/20")}>
         {label}
       </div>
       <div className="space-y-3">
@@ -75,7 +66,7 @@ function PLCard({
             <div className="text-right">
               <span className={cn("text-sm font-semibold", r.highlight && "text-base")}>{r.value}</span>
               {r.sub && <span className={cn("ml-1.5 text-[11px] font-medium",
-                color === "indigo" ? "text-indigo-400" : color === "emerald" ? "text-emerald-400" : "text-violet-400")}>
+                color === "indigo" ? "text-indigo-400" : "text-violet-400")}>
                 {r.sub}
               </span>}
             </div>
@@ -89,17 +80,36 @@ function PLCard({
 export default function FinancialOverviewPage() {
   const [cashFormOpen, setCashFormOpen] = useState(false);
   const { cashFlowItems: CASH_FLOW_ITEMS, deleteCashFlowItem } = useData();
+
+  const cashRegisterSort = useSort();
+  const sortedCashItems = cashRegisterSort.apply(CASH_FLOW_ITEMS, {
+    Description: i => i.description,
+    Customer: i => i.customer,
+    Amount: i => Math.abs(i.amount),
+    "Due Date": i => i.dueDate,
+    Category: i => i.category,
+    Status: i => i.status,
+  });
+  const plSort = useSort();
+  const sortedYtd = plSort.apply(ytd, {
+    Month: p => p.label,
+    Revenue: p => p.revenue,
+    "Gross Profit": p => p.grossProfit,
+    "GM%": p => p.gmPct,
+    EBITDA: p => p.ebitda,
+    "EBITDA%": p => p.ebitdaPct,
+    "Net Profit": p => p.netProfit,
+    Cash: p => p.cashBalance,
+  });
   const trend12 = FINANCIAL_PERIODS.slice(-12);
 
   const plTrend = trend12.map(p => ({
     name: p.label,
-    "Tooling Rev": p.toolingRevenue,
-    "Injection Rev": p.injectionRevenue,
+    "Revenue": p.toolingRevenue,
     "EBITDA%": p.ebitdaPct,
     "GM%": p.gmPct,
   }));
 
-  // EBITDA bridge (waterfall-like) for YTD
   const bridgeData = [
     { name: "Revenue", value: ytdRev, fill: "#6366f1" },
     { name: "- Material", value: -(ytdRev * 0.18), fill: "#f43f5e" },
@@ -112,7 +122,6 @@ export default function FinancialOverviewPage() {
     { name: "= Net Profit", value: ytdNet, fill: "#6366f1" },
   ];
 
-  // Cash flow forecast 30/60/90
   const forecastData = [
     {
       period: "30 days",
@@ -123,7 +132,6 @@ export default function FinancialOverviewPage() {
     { period: "90 days", Inflows: 340000, Outflows: 265000 },
   ];
 
-  // Cash trend
   const cashTrend = FINANCIAL_PERIODS.slice(-12).map(p => ({
     name: p.label,
     Cash: p.cashBalance,
@@ -139,7 +147,7 @@ export default function FinancialOverviewPage() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <DollarSign className="w-6 h-6 text-amber-400" /> Financial Overview
           </h1>
-          <p className="text-sm text-muted-foreground">Consolidated P&L · YTD Jan–Apr 2026</p>
+          <p className="text-sm text-muted-foreground">Tooling Business P&L · YTD Jan–Apr 2026</p>
         </div>
         <Button size="sm" className="gap-1.5" onClick={() => setCashFormOpen(true)}>
           <Plus className="w-3.5 h-3.5" /> Dodaj fakturę / płatność
@@ -151,33 +159,24 @@ export default function FinancialOverviewPage() {
         <p className="text-xs uppercase font-semibold text-muted-foreground mb-3 tracking-widest">
           Year-to-Date P&L – January–April 2026
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <PLCard
             label="Tooling Business"
-            revenue={ytdToolRev}
-            gp={ytdToolGP}
-            gmPct={ytdToolRev > 0 ? (ytdToolGP / ytdToolRev) * 100 : 0}
-            ebitda={ytdToolEBITDA}
-            ebitdaPct={ytdToolRev > 0 ? (ytdToolEBITDA / ytdToolRev) * 100 : 0}
-            color="indigo"
-          />
-          <PLCard
-            label="Injection Molding"
-            revenue={ytdInjRev}
-            gp={ytdInjGP}
-            gmPct={ytdInjRev > 0 ? (ytdInjGP / ytdInjRev) * 100 : 0}
-            ebitda={ytdInjEBITDA}
-            ebitdaPct={ytdInjRev > 0 ? (ytdInjEBITDA / ytdInjRev) * 100 : 0}
-            color="emerald"
-          />
-          <PLCard
-            label="Consolidated"
             revenue={ytdRev}
             gp={ytdGP}
             gmPct={ytdRev > 0 ? (ytdGP / ytdRev) * 100 : 0}
             ebitda={ytdEBITDA}
             ebitdaPct={ytdRev > 0 ? (ytdEBITDA / ytdRev) * 100 : 0}
-            netProfit={ytdNet}
+            color="indigo"
+          />
+          <PLCard
+            label="Full Year Outlook"
+            revenue={ytdRev * (12 / 4)}
+            gp={ytdGP * (12 / 4)}
+            gmPct={ytdRev > 0 ? (ytdGP / ytdRev) * 100 : 0}
+            ebitda={ytdEBITDA * (12 / 4)}
+            ebitdaPct={ytdRev > 0 ? (ytdEBITDA / ytdRev) * 100 : 0}
+            netProfit={ytdNet * (12 / 4)}
             netPct={ytdRev > 0 ? (ytdNet / ytdRev) * 100 : 0}
             color="violet"
           />
@@ -189,7 +188,7 @@ export default function FinancialOverviewPage() {
         {/* Revenue + EBITDA trend */}
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-sm font-semibold mb-1">Revenue & EBITDA% Trend</p>
-          <p className="text-xs text-muted-foreground mb-4">12-month by business line</p>
+          <p className="text-xs text-muted-foreground mb-4">12-month · Tooling Revenue</p>
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={plTrend} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -198,15 +197,14 @@ export default function FinancialOverviewPage() {
               <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={v => `${v}%`} domain={[0, 50]} />
               <RTooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar yAxisId="l" dataKey="Tooling Rev" stackId="a" fill="#6366f1" opacity={0.9} />
-              <Bar yAxisId="l" dataKey="Injection Rev" stackId="a" fill="#10b981" radius={[3, 3, 0, 0]} opacity={0.9} />
+              <Bar yAxisId="l" dataKey="Revenue" fill="#6366f1" radius={[3, 3, 0, 0]} opacity={0.9} />
               <Line yAxisId="r" type="monotone" dataKey="EBITDA%" stroke="#f59e0b" strokeWidth={2} dot={false} />
               <Line yAxisId="r" type="monotone" dataKey="GM%" stroke="#94a3b8" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        {/* EBITDA Bridge / Cost Waterfall */}
+        {/* EBITDA Bridge */}
         <div className="rounded-xl border border-border bg-card p-5">
           <p className="text-sm font-semibold mb-1">EBITDA Bridge – YTD 2026</p>
           <p className="text-xs text-muted-foreground mb-4">Revenue → Cost deductions → EBITDA</p>
@@ -283,6 +281,55 @@ export default function FinancialOverviewPage() {
         </div>
       </div>
 
+      {/* ── Cash Flow Register ── */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <p className="text-sm font-semibold">Cash Flow Register</p>
+          <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => setCashFormOpen(true)}>
+            <Plus className="w-3 h-3" /> Add
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border bg-muted/20">
+                {(["Description", "Customer", "Amount", "Due Date", "Category", "Status"] as const).map(h => (
+                  <SortHead key={h} label={h} sort={cashRegisterSort} className="text-left py-2.5 px-3 text-muted-foreground font-medium" />
+                ))}
+                <th className="py-2.5 px-3 w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {sortedCashItems.map(item => (
+                <tr key={item.id} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
+                  <td className="py-2.5 px-3 font-medium">{item.description}</td>
+                  <td className="py-2.5 px-3 text-muted-foreground">{item.customer}</td>
+                  <td className={cn("py-2.5 px-3 tabular-nums font-semibold", item.type === "INFLOW" ? "text-emerald-400" : "text-rose-400")}>
+                    {item.type === "INFLOW" ? "+" : "-"}{formatCurrency(Math.abs(item.amount))}
+                  </td>
+                  <td className="py-2.5 px-3 text-muted-foreground">{item.dueDate}</td>
+                  <td className="py-2.5 px-3 text-muted-foreground">{item.category}</td>
+                  <td className="py-2.5 px-3">
+                    <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold",
+                      item.status === "OVERDUE" ? "bg-rose-500/20 text-rose-400" :
+                      item.status === "CONFIRMED" ? "bg-emerald-500/20 text-emerald-400" :
+                      item.status === "ISSUED" ? "bg-blue-500/20 text-blue-400" :
+                      "bg-muted text-muted-foreground")}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <button onClick={() => deleteCashFlowItem(item.id)} className="text-muted-foreground/40 hover:text-rose-400 transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* ── Monthly P&L Table ── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-5 py-4 border-b border-border">
@@ -292,18 +339,16 @@ export default function FinancialOverviewPage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/20">
-                {["Month", "Tool. Rev", "Inj. Rev", "Total Rev", "Gross Profit", "GM%", "EBITDA", "EBITDA%", "Net Profit", "Cash"].map(h => (
-                  <th key={h} className="text-right first:text-left py-2.5 px-3 text-muted-foreground font-medium whitespace-nowrap">{h}</th>
+                {(["Month", "Revenue", "Gross Profit", "GM%", "EBITDA", "EBITDA%", "Net Profit", "Cash"] as const).map(h => (
+                  <SortHead key={h} label={h} sort={plSort} className="text-right first:text-left py-2.5 px-3 text-muted-foreground font-medium" />
                 ))}
               </tr>
             </thead>
             <tbody>
-              {ytd.map(p => (
+              {sortedYtd.map(p => (
                 <tr key={p.month} className="border-b border-border/50 hover:bg-accent/20 transition-colors">
                   <td className="py-2.5 px-3 font-semibold">{p.label}</td>
-                  <td className="py-2.5 px-3 tabular-nums text-right text-indigo-400">{formatCurrency(p.toolingRevenue)}</td>
-                  <td className="py-2.5 px-3 tabular-nums text-right text-emerald-400">{formatCurrency(p.injectionRevenue)}</td>
-                  <td className="py-2.5 px-3 tabular-nums text-right font-semibold">{formatCurrency(p.revenue)}</td>
+                  <td className="py-2.5 px-3 tabular-nums text-right font-semibold text-indigo-400">{formatCurrency(p.revenue)}</td>
                   <td className="py-2.5 px-3 tabular-nums text-right">{formatCurrency(p.grossProfit)}</td>
                   <td className={cn("py-2.5 px-3 tabular-nums text-right font-bold",
                     p.gmPct >= 30 ? "text-emerald-400" : p.gmPct >= 25 ? "text-amber-400" : "text-rose-400")}>
@@ -318,12 +363,9 @@ export default function FinancialOverviewPage() {
                   <td className="py-2.5 px-3 tabular-nums text-right text-cyan-400">{formatCurrency(p.cashBalance)}</td>
                 </tr>
               ))}
-              {/* YTD Total */}
               <tr className="bg-accent/20 font-semibold border-t border-border">
                 <td className="py-2.5 px-3 font-bold">YTD Total</td>
-                <td className="py-2.5 px-3 tabular-nums text-right text-indigo-400">{formatCurrency(ytdToolRev)}</td>
-                <td className="py-2.5 px-3 tabular-nums text-right text-emerald-400">{formatCurrency(ytdInjRev)}</td>
-                <td className="py-2.5 px-3 tabular-nums text-right font-bold">{formatCurrency(ytdRev)}</td>
+                <td className="py-2.5 px-3 tabular-nums text-right font-bold text-indigo-400">{formatCurrency(ytdRev)}</td>
                 <td className="py-2.5 px-3 tabular-nums text-right">{formatCurrency(ytdGP)}</td>
                 <td className={cn("py-2.5 px-3 tabular-nums text-right font-bold",
                   (ytdGP / ytdRev * 100) >= 30 ? "text-emerald-400" : "text-amber-400")}>

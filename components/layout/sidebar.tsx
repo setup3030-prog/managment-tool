@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import {
-  Factory, LayoutDashboard, Wrench, Settings2, DollarSign,
-  ShoppingCart, AlertTriangle, FileBarChart, Settings,
-  ChevronLeft, ChevronRight, LogOut, User,
-  FlaskConical,
+  LayoutDashboard, Wrench, Settings2, DollarSign,
+  AlertTriangle, FileBarChart, Settings,
+  ChevronLeft, ChevronRight, LogOut, User, Users2,
+  Factory, Target,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -15,23 +16,26 @@ import { toast } from "sonner";
 const NAV_ITEMS = [
   { href: "/dashboard",  label: "Executive Summary",    icon: LayoutDashboard,  group: "main" },
   { href: "/tooling",    label: "Tooling Business",     icon: Wrench,           group: "main" },
-  { href: "/injection",  label: "Injection Business",   icon: FlaskConical,     group: "main" },
+  { href: "/injection",  label: "Injection Business",   icon: Factory,          group: "main" },
+  { href: "/sales",      label: "Sales / RFQ",          icon: Target,           group: "main" },
   { href: "/financial",  label: "Financial Overview",   icon: DollarSign,       group: "main" },
-  { href: "/sales",      label: "Sales / RFQ",          icon: ShoppingCart,     group: "main" },
   { href: "/risks",      label: "Risks / Actions",      icon: AlertTriangle,    group: "main" },
+  { href: "/org-chart",  label: "Org Chart",             icon: Users2,           group: "main" },
   { href: "/reports",    label: "Reports",               icon: FileBarChart,     group: "tools" },
   { href: "/settings",   label: "Settings",              icon: Settings,         group: "tools" },
 ];
 
 const BADGE: Record<string, { count: string; color: string }> = {
-  "/risks": { count: "5", color: "bg-rose-500" },
-  "/tooling": { count: "3", color: "bg-amber-500" },
+  "/risks":     { count: "5", color: "bg-rose-500" },
+  "/tooling":   { count: "3", color: "bg-amber-500" },
+  "/sales":     { count: "3", color: "bg-indigo-500" },
 };
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   function handleLogout() {
     document.cookie = "demo_session=; path=/; max-age=0";
@@ -51,15 +55,59 @@ export function Sidebar() {
         className="relative flex flex-col h-screen bg-[hsl(var(--sidebar-background))] border-r border-[hsl(var(--sidebar-border))] z-30 overflow-hidden shrink-0"
       >
         {/* Logo */}
-        <div className={cn("flex items-center gap-3 px-4 h-16 border-b border-[hsl(var(--sidebar-border))]", collapsed && "justify-center px-0")}>
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-            <Factory className="w-4 h-4 text-indigo-400" />
-          </div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                <p className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">Shapers</p>
-                <p className="text-[10px] text-muted-foreground whitespace-nowrap">Command Center</p>
+        <div className={cn(
+          "flex items-center h-16 border-b border-[hsl(var(--sidebar-border))]",
+          collapsed ? "justify-center px-0" : "px-3"
+        )}>
+          <AnimatePresence mode="wait" initial={false}>
+            {collapsed ? (
+              <motion.div
+                key="icon"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                className="w-9 h-9 flex items-center justify-center shrink-0"
+              >
+                {/* S lettermark — brand colors */}
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1.4">
+                      <stop offset="0%" stopColor="#e2e8f0" />
+                      <stop offset="55%" stopColor="#94a3b8" />
+                      <stop offset="100%" stopColor="#c026d3" />
+                    </linearGradient>
+                  </defs>
+                  <text x="50%" y="73%" textAnchor="middle" fontSize="28" fontWeight="800"
+                    fontFamily="Inter, system-ui, sans-serif" fill="url(#sg)" letterSpacing="-1">
+                    S
+                  </text>
+                </svg>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="logo"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="relative w-full h-9 flex items-center"
+              >
+                {!logoError ? (
+                  <Image
+                    src="/logo.png"
+                    alt="Shapers Poland"
+                    fill
+                    priority
+                    onError={() => setLogoError(true)}
+                    style={{ objectFit: "contain", objectPosition: "left center" }}
+                  />
+                ) : (
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">Shapers</span>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">Command Center</span>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -101,7 +149,7 @@ export function Sidebar() {
                 <AnimatePresence>
                   {!collapsed && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 text-left overflow-hidden">
-                      <p className="text-xs font-medium text-foreground truncate">T. Keller</p>
+                      <p className="text-xs font-medium text-foreground truncate">B. Zarski</p>
                       <p className="text-[10px] text-muted-foreground truncate">Managing Director</p>
                     </motion.div>
                   )}

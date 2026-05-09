@@ -1,12 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { FileText, Users, LayoutDashboard, BarChart3, Settings2, Building2 } from "lucide-react";
+import { Wrench, Users, LayoutDashboard, BarChart3, Settings2, Building2, DollarSign, AlertTriangle, Users2, Factory, Target } from "lucide-react";
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
   CommandItem, CommandList, CommandSeparator,
 } from "@/components/ui/command";
-import { CUSTOMERS, getEnrichedRfqs } from "@/data/seed-data";
-const ENRICHED_RFQS = getEnrichedRfqs();
+import { CUSTOMERS } from "@/data/seed-data";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -23,7 +22,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search RFQs, customers, pages..." />
+      <CommandInput placeholder="Search customers, pages..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
 
@@ -32,13 +31,29 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <LayoutDashboard className="mr-2 h-4 w-4 text-muted-foreground" />
             <span>Dashboard</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigate("/rfq")}>
-            <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>RFQ / Quoting</span>
+          <CommandItem onSelect={() => navigate("/tooling")}>
+            <Wrench className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Tooling Business</span>
           </CommandItem>
-          <CommandItem onSelect={() => navigate("/rfq/new")}>
-            <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>New RFQ</span>
+          <CommandItem onSelect={() => navigate("/injection")}>
+            <Factory className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Injection Business</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/sales")}>
+            <Target className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Sales / RFQ</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/financial")}>
+            <DollarSign className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Financial Overview</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/risks")}>
+            <AlertTriangle className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Risks / Actions</span>
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/org-chart")}>
+            <Users2 className="mr-2 h-4 w-4 text-muted-foreground" />
+            <span>Org Chart</span>
           </CommandItem>
           <CommandItem onSelect={() => navigate("/crm")}>
             <Users className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -65,21 +80,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Building2 className="mr-2 h-4 w-4 text-muted-foreground" />
               <span>{customer.name}</span>
               <span className="ml-2 text-xs text-muted-foreground">{customer.country}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Recent RFQs">
-          {ENRICHED_RFQS.slice(0, 8).map((rfq) => (
-            <CommandItem
-              key={rfq.id}
-              onSelect={() => navigate(`/rfq/${rfq.id}`)}
-            >
-              <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
-              <span>{rfq.rfqNumber}</span>
-              <span className="ml-2 text-xs text-muted-foreground truncate">{rfq.projectName}</span>
             </CommandItem>
           ))}
         </CommandGroup>

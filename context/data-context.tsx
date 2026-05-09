@@ -1,11 +1,12 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import type { ToolingProject, RiskAction, CashFlowItem, InjectionPart } from "@/types";
+import type { ToolingProject, RiskAction, CashFlowItem, OrgEmployee, RFQ } from "@/types";
 import {
   TOOLING_PROJECTS as SEED_PROJECTS,
   RISK_ACTIONS as SEED_RISKS,
   CASH_FLOW_ITEMS as SEED_CASH,
-  INJECTION_PARTS as SEED_PARTS,
+  EMPLOYEES as SEED_EMPLOYEES,
+  RFQS as SEED_RFQS,
 } from "@/data/seed-data";
 
 // ─── localStorage keys ────────────────────────────────────────────────────────
@@ -13,9 +14,12 @@ const KEYS = {
   projects:  "shapers_projects",
   risks:     "shapers_risks",
   cashflow:  "shapers_cashflow",
-  parts:     "shapers_parts",
-  overrideProjects: "shapers_override_projects",
-  overrideRisks:    "shapers_override_risks",
+  overrideProjects:  "shapers_override_projects",
+  overrideRisks:     "shapers_override_risks",
+  employees:         "shapers_employees",
+  overrideEmployees: "shapers_override_employees",
+  rfqs:              "shapers_rfqs",
+  overrideRfqs:      "shapers_override_rfqs",
   deleted:   "shapers_deleted",
 };
 
@@ -40,7 +44,8 @@ interface DataContextType {
   toolingProjects: ToolingProject[];
   riskActions: RiskAction[];
   cashFlowItems: CashFlowItem[];
-  injectionParts: InjectionPart[];
+  employees: OrgEmployee[];
+  rfqs: RFQ[];
   // Tooling projects
   addToolingProject: (p: Omit<ToolingProject, "id">) => void;
   updateToolingProject: (id: string, p: Partial<ToolingProject>) => void;
@@ -52,10 +57,14 @@ interface DataContextType {
   // Cash flow
   addCashFlowItem: (c: Omit<CashFlowItem, "id">) => void;
   deleteCashFlowItem: (id: string) => void;
-  // Injection parts
-  addInjectionPart: (p: Omit<InjectionPart, "id">) => void;
-  updateInjectionPart: (id: string, p: Partial<InjectionPart>) => void;
-  deleteInjectionPart: (id: string) => void;
+  // Employees
+  addEmployee: (e: Omit<OrgEmployee, "id">) => void;
+  updateEmployee: (id: string, e: Partial<OrgEmployee>) => void;
+  deleteEmployee: (id: string) => void;
+  // RFQs
+  addRfq: (r: Omit<RFQ, "id">) => void;
+  updateRfq: (id: string, r: Partial<RFQ>) => void;
+  deleteRfq: (id: string) => void;
   // Reset
   resetToSeedData: () => void;
 }
@@ -65,14 +74,17 @@ const DataContext = createContext<DataContextType | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 export function DataProvider({ children }: { children: React.ReactNode }) {
   // User-added items
-  const [localProjects, setLocalProjects] = useState<ToolingProject[]>([]);
-  const [localRisks,    setLocalRisks]    = useState<RiskAction[]>([]);
-  const [localCash,     setLocalCash]     = useState<CashFlowItem[]>([]);
-  const [localParts,    setLocalParts]    = useState<InjectionPart[]>([]);
+  const [localProjects,   setLocalProjects]   = useState<ToolingProject[]>([]);
+  const [localRisks,      setLocalRisks]      = useState<RiskAction[]>([]);
+  const [localCash,       setLocalCash]       = useState<CashFlowItem[]>([]);
+  const [localEmployees,  setLocalEmployees]  = useState<OrgEmployee[]>([]);
+  const [localRfqs,       setLocalRfqs]       = useState<RFQ[]>([]);
 
   // Overrides for seed items (edits to existing seed data)
-  const [overrideProjects, setOverrideProjects] = useState<Record<string, ToolingProject>>({});
-  const [overrideRisks,    setOverrideRisks]    = useState<Record<string, RiskAction>>({});
+  const [overrideProjects,   setOverrideProjects]   = useState<Record<string, ToolingProject>>({});
+  const [overrideRisks,      setOverrideRisks]      = useState<Record<string, RiskAction>>({});
+  const [overrideEmployees,  setOverrideEmployees]  = useState<Record<string, OrgEmployee>>({});
+  const [overrideRfqs,       setOverrideRfqs]       = useState<Record<string, RFQ>>({});
 
   // IDs deleted from seed data
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
@@ -82,9 +94,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setLocalProjects(load<ToolingProject>(KEYS.projects));
     setLocalRisks(load<RiskAction>(KEYS.risks));
     setLocalCash(load<CashFlowItem>(KEYS.cashflow));
-    setLocalParts(load<InjectionPart>(KEYS.parts));
+    setLocalEmployees(load<OrgEmployee>(KEYS.employees));
+    setLocalRfqs(load<RFQ>(KEYS.rfqs));
     setOverrideProjects(loadMap<ToolingProject>(KEYS.overrideProjects));
     setOverrideRisks(loadMap<RiskAction>(KEYS.overrideRisks));
+    setOverrideEmployees(loadMap<OrgEmployee>(KEYS.overrideEmployees));
+    setOverrideRfqs(loadMap<RFQ>(KEYS.overrideRfqs));
     setDeletedIds(new Set(load<string>(KEYS.deleted)));
   }, []);
 
@@ -108,9 +123,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     ...localCash,
   ];
 
-  const injectionParts: InjectionPart[] = [
-    ...SEED_PARTS.filter(p => !deletedIds.has(p.id)),
-    ...localParts,
+  const employees: OrgEmployee[] = [
+    ...SEED_EMPLOYEES
+      .filter(e => !deletedIds.has(e.id))
+      .map(e => overrideEmployees[e.id] ?? e),
+    ...localEmployees,
+  ];
+
+  const rfqs: RFQ[] = [
+    ...SEED_RFQS
+      .filter(r => !deletedIds.has(r.id))
+      .map(r => overrideRfqs[r.id] ?? r),
+    ...localRfqs,
   ];
 
   // ── Helpers ──
@@ -189,40 +213,80 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setLocalCash(prev => { const next = prev.filter(c => c.id !== id); save(KEYS.cashflow, next); return next; });
   }, [deletedIds]);
 
-  // ── Injection Parts ──
-  const addInjectionPart = useCallback((data: Omit<InjectionPart, "id">) => {
-    const item: InjectionPart = { ...data, id: `ip-${Date.now()}` };
-    setLocalParts(prev => { const next = [...prev, item]; save(KEYS.parts, next); return next; });
+  // ── Employees ──
+  const addEmployee = useCallback((data: Omit<OrgEmployee, "id">) => {
+    const item: OrgEmployee = { ...data, id: `emp-${Date.now()}` };
+    setLocalEmployees(prev => { const next = [...prev, item]; save(KEYS.employees, next); return next; });
   }, []);
 
-  const updateInjectionPart = useCallback((id: string, updates: Partial<InjectionPart>) => {
-    setLocalParts(prev => {
-      const next = prev.map(p => p.id === id ? { ...p, ...updates } : p);
-      save(KEYS.parts, next);
-      return next;
-    });
+  const updateEmployee = useCallback((id: string, updates: Partial<OrgEmployee>) => {
+    const isSeed = SEED_EMPLOYEES.some(e => e.id === id);
+    if (isSeed) {
+      setOverrideEmployees(prev => {
+        const base = prev[id] ?? SEED_EMPLOYEES.find(e => e.id === id)!;
+        const next = { ...prev, [id]: { ...base, ...updates } };
+        save(KEYS.overrideEmployees, next);
+        return next;
+      });
+    } else {
+      setLocalEmployees(prev => {
+        const next = prev.map(e => e.id === id ? { ...e, ...updates } : e);
+        save(KEYS.employees, next);
+        return next;
+      });
+    }
   }, []);
 
-  const deleteInjectionPart = useCallback((id: string) => {
+  const deleteEmployee = useCallback((id: string) => {
     markDeleted(id);
-    setLocalParts(prev => { const next = prev.filter(p => p.id !== id); save(KEYS.parts, next); return next; });
+    setLocalEmployees(prev => { const next = prev.filter(e => e.id !== id); save(KEYS.employees, next); return next; });
+  }, [deletedIds]);
+
+  // ── RFQs ──
+  const addRfq = useCallback((data: Omit<RFQ, "id">) => {
+    const item: RFQ = { ...data, id: `rq-${Date.now()}` };
+    setLocalRfqs(prev => { const next = [...prev, item]; save(KEYS.rfqs, next); return next; });
+  }, []);
+
+  const updateRfq = useCallback((id: string, updates: Partial<RFQ>) => {
+    const isSeed = SEED_RFQS.some(r => r.id === id);
+    if (isSeed) {
+      setOverrideRfqs(prev => {
+        const base = prev[id] ?? SEED_RFQS.find(r => r.id === id)!;
+        const next = { ...prev, [id]: { ...base, ...updates } };
+        save(KEYS.overrideRfqs, next);
+        return next;
+      });
+    } else {
+      setLocalRfqs(prev => {
+        const next = prev.map(r => r.id === id ? { ...r, ...updates } : r);
+        save(KEYS.rfqs, next);
+        return next;
+      });
+    }
+  }, []);
+
+  const deleteRfq = useCallback((id: string) => {
+    markDeleted(id);
+    setLocalRfqs(prev => { const next = prev.filter(r => r.id !== id); save(KEYS.rfqs, next); return next; });
   }, [deletedIds]);
 
   // ── Reset ──
   const resetToSeedData = useCallback(() => {
     Object.values(KEYS).forEach(k => localStorage.removeItem(k));
-    setLocalProjects([]); setLocalRisks([]); setLocalCash([]); setLocalParts([]);
-    setOverrideProjects({}); setOverrideRisks({});
+    setLocalProjects([]); setLocalRisks([]); setLocalCash([]); setLocalEmployees([]); setLocalRfqs([]);
+    setOverrideProjects({}); setOverrideRisks({}); setOverrideEmployees({}); setOverrideRfqs({});
     setDeletedIds(new Set());
   }, []);
 
   return (
     <DataContext.Provider value={{
-      toolingProjects, riskActions, cashFlowItems, injectionParts,
+      toolingProjects, riskActions, cashFlowItems, employees, rfqs,
       addToolingProject, updateToolingProject, deleteToolingProject,
       addRiskAction, updateRiskAction, deleteRiskAction,
       addCashFlowItem, deleteCashFlowItem,
-      addInjectionPart, updateInjectionPart, deleteInjectionPart,
+      addEmployee, updateEmployee, deleteEmployee,
+      addRfq, updateRfq, deleteRfq,
       resetToSeedData,
     }}>
       {children}
