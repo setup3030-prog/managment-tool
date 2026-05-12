@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import {
   LayoutDashboard, Wrench, DollarSign,
   AlertTriangle, FileBarChart, Settings,
@@ -35,7 +34,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const [logoError, setLogoError] = useState(false);
 
   function handleLogout() {
     document.cookie = "demo_session=; path=/; max-age=0";
@@ -93,21 +91,10 @@ export function Sidebar() {
                 transition={{ duration: 0.18 }}
                 className="relative w-full h-9 flex items-center"
               >
-                {!logoError ? (
-                  <Image
-                    src="/logo.png"
-                    alt="Rocco Tools Poland"
-                    fill
-                    priority
-                    onError={() => setLogoError(true)}
-                    style={{ objectFit: "contain", objectPosition: "left center" }}
-                  />
-                ) : (
-                  <div className="flex flex-col">
-                    <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">Rocco Tools</span>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">Command Center</span>
-                  </div>
-                )}
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">Rocco Tools</span>
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap">Command Center</span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
