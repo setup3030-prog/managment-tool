@@ -12,8 +12,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Shapers Command Center",
-    template: "%s | Shapers",
+    default: "Rocco Tools Command Center",
+    template: "%s | Rocco Tools",
   },
   description: "Executive management platform for plastic injection molding & tooling operations",
 };

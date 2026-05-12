@@ -96,7 +96,7 @@ export function Sidebar() {
                 {!logoError ? (
                   <Image
                     src="/logo.png"
-                    alt="Shapers Poland"
+                    alt="Rocco Tools Poland"
                     fill
                     priority
                     onError={() => setLogoError(true)}
@@ -104,7 +104,7 @@ export function Sidebar() {
                   />
                 ) : (
                   <div className="flex flex-col">
-                    <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">Shapers</span>
+                    <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">Rocco Tools</span>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap">Command Center</span>
                   </div>
                 )}

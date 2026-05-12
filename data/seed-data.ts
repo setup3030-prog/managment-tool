@@ -591,17 +591,17 @@ export const CLAIMS: Claim[] = [
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 export const USERS: UserProfile[] = [
-  { id: "u1", name: "Thomas Keller", email: "thomas.keller@shapers.eu", role: "ADMIN", department: "Management" },
-  { id: "u2", name: "Anna Nowak", email: "a.nowak@shapers.eu", role: "SALES", department: "Sales & Commercial" },
-  { id: "u3", name: "Marcin Kowalski", email: "m.kowalski@shapers.eu", role: "ENGINEER", department: "Tooling Engineering" },
-  { id: "u4", name: "Piotr Wiśniewski", email: "p.wisniewski@shapers.eu", role: "ENGINEER", department: "Production" },
-  { id: "u5", name: "Katarzyna Zając", email: "k.zajac@shapers.eu", role: "FINANCE", department: "Finance & Controlling" },
+  { id: "u1", name: "Thomas Keller", email: "thomas.keller@rocco-tools.eu", role: "ADMIN", department: "Management" },
+  { id: "u2", name: "Anna Nowak", email: "a.nowak@rocco-tools.eu", role: "SALES", department: "Sales & Commercial" },
+  { id: "u3", name: "Marcin Kowalski", email: "m.kowalski@rocco-tools.eu", role: "ENGINEER", department: "Tooling Engineering" },
+  { id: "u4", name: "Piotr Wiśniewski", email: "p.wisniewski@rocco-tools.eu", role: "ENGINEER", department: "Production" },
+  { id: "u5", name: "Katarzyna Zając", email: "k.zajac@rocco-tools.eu", role: "FINANCE", department: "Finance & Controlling" },
 ];
 
 // ─── App Settings ─────────────────────────────────────────────────────────────
 
 export const APP_SETTINGS = {
-  companyName: "Shapers Polska Sp. z o.o.",
+  companyName: "Rocco Tools Polska Sp. z o.o.",
   currency: "EUR",
   rfqValidityDays: 60,
   marginGreenThreshold: 25,
@@ -638,97 +638,97 @@ export const EMPLOYEES: OrgEmployee[] = [
   // ── Management
   {
     id: "e1", name: "Tomasz Keller", position: "Managing Director",
-    department: "Management", email: "t.keller@shapers.pl",
+    department: "Management", email: "t.keller@rocco-tools.pl",
     phone: "+48 600 100 001", role: "ADMIN", hireYear: 2010,
   },
   // ── Technical
   {
     id: "e2", name: "Marek Wiśniewski", position: "Technical Director",
-    department: "Technical", email: "m.wisniewski@shapers.pl",
+    department: "Technical", email: "m.wisniewski@rocco-tools.pl",
     phone: "+48 600 100 002", reportsTo: "e1", role: "ENGINEER", hireYear: 2012,
   },
   {
     id: "e3", name: "Artur Nowak", position: "CNC Workshop Lead",
-    department: "Technical", email: "a.nowak@shapers.pl",
+    department: "Technical", email: "a.nowak@rocco-tools.pl",
     phone: "+48 600 100 003", reportsTo: "e2", role: "ENGINEER", hireYear: 2014,
   },
   {
     id: "e4", name: "Piotr Kowalski", position: "CNC Machinist",
-    department: "Technical", email: "p.kowalski@shapers.pl",
+    department: "Technical", email: "p.kowalski@rocco-tools.pl",
     reportsTo: "e3", role: "VIEWER", hireYear: 2016,
   },
   {
     id: "e5", name: "Łukasz Zając", position: "CNC Machinist",
-    department: "Technical", email: "l.zajac@shapers.pl",
+    department: "Technical", email: "l.zajac@rocco-tools.pl",
     reportsTo: "e3", role: "VIEWER", hireYear: 2018,
   },
   {
     id: "e6", name: "Dawid Sikora", position: "CNC Machinist",
-    department: "Technical", email: "d.sikora@shapers.pl",
+    department: "Technical", email: "d.sikora@rocco-tools.pl",
     reportsTo: "e3", role: "VIEWER", hireYear: 2020,
   },
   {
     id: "e7", name: "Rafał Kubiak", position: "EDM Operator Senior",
-    department: "Technical", email: "r.kubiak@shapers.pl",
+    department: "Technical", email: "r.kubiak@rocco-tools.pl",
     phone: "+48 600 100 007", reportsTo: "e2", role: "ENGINEER", hireYear: 2013,
   },
   {
     id: "e8", name: "Michał Dąbrowski", position: "EDM Operator",
-    department: "Technical", email: "m.dabrowski@shapers.pl",
+    department: "Technical", email: "m.dabrowski@rocco-tools.pl",
     reportsTo: "e7", role: "VIEWER", hireYear: 2019,
   },
   // ── Design
   {
     id: "e9", name: "Katarzyna Jankowska", position: "Design & CAM Lead",
-    department: "Design", email: "k.jankowska@shapers.pl",
+    department: "Design", email: "k.jankowska@rocco-tools.pl",
     phone: "+48 600 100 009", reportsTo: "e2", role: "ENGINEER", hireYear: 2015,
   },
   {
     id: "e10", name: "Tomasz Wróbel", position: "CAD Designer",
-    department: "Design", email: "t.wrobel@shapers.pl",
+    department: "Design", email: "t.wrobel@rocco-tools.pl",
     reportsTo: "e9", role: "ENGINEER", hireYear: 2017,
   },
   {
     id: "e11", name: "Mateusz Kaczmarek", position: "CAM Engineer",
-    department: "Design", email: "m.kaczmarek@shapers.pl",
+    department: "Design", email: "m.kaczmarek@rocco-tools.pl",
     reportsTo: "e9", role: "ENGINEER", hireYear: 2021,
   },
   // ── Sales
   {
     id: "e12", name: "Anna Kowalczyk", position: "Sales & Commercial Director",
-    department: "Sales", email: "a.kowalczyk@shapers.pl",
+    department: "Sales", email: "a.kowalczyk@rocco-tools.pl",
     phone: "+48 600 100 012", reportsTo: "e1", role: "SALES", hireYear: 2013,
   },
   {
     id: "e13", name: "Bartosz Mazur", position: "Key Account Manager (OEM)",
-    department: "Sales", email: "b.mazur@shapers.pl",
+    department: "Sales", email: "b.mazur@rocco-tools.pl",
     phone: "+48 600 100 013", reportsTo: "e12", role: "SALES", hireYear: 2016,
   },
   {
     id: "e14", name: "Karolina Lis", position: "Key Account Manager (Tier1)",
-    department: "Sales", email: "k.lis@shapers.pl",
+    department: "Sales", email: "k.lis@rocco-tools.pl",
     phone: "+48 600 100 014", reportsTo: "e12", role: "SALES", hireYear: 2018,
   },
   // ── Finance
   {
     id: "e15", name: "Ewa Adamczyk", position: "Finance & HR Manager",
-    department: "Finance", email: "e.adamczyk@shapers.pl",
+    department: "Finance", email: "e.adamczyk@rocco-tools.pl",
     phone: "+48 600 100 015", reportsTo: "e1", role: "FINANCE", hireYear: 2014,
   },
   {
     id: "e16", name: "Paweł Zielonka", position: "Financial Controller",
-    department: "Finance", email: "p.zielonka@shapers.pl",
+    department: "Finance", email: "p.zielonka@rocco-tools.pl",
     reportsTo: "e15", role: "FINANCE", hireYear: 2019,
   },
   // ── Quality
   {
     id: "e17", name: "Krzysztof Pawlak", position: "Quality Manager",
-    department: "Quality", email: "k.pawlak@shapers.pl",
+    department: "Quality", email: "k.pawlak@rocco-tools.pl",
     phone: "+48 600 100 017", reportsTo: "e1", role: "ENGINEER", hireYear: 2015,
   },
   {
     id: "e18", name: "Joanna Wierzbicka", position: "QC Engineer",
-    department: "Quality", email: "j.wierzbicka@shapers.pl",
+    department: "Quality", email: "j.wierzbicka@rocco-tools.pl",
     reportsTo: "e17", role: "ENGINEER", hireYear: 2022,
   },
 ];

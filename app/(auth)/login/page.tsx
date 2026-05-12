@@ -116,7 +116,7 @@ export default function LoginPage() {
               <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
                 <Factory className="w-5 h-5 text-indigo-400" />
               </div>
-              <span className="text-2xl font-bold text-white tracking-tight">Shapers</span>
+              <span className="text-2xl font-bold text-white tracking-tight">Rocco Tools</span>
             </div>
             <h2 className="text-3xl font-bold text-white leading-tight mb-3">
               Factory ERP meets<br />
@@ -142,7 +142,7 @@ export default function LoginPage() {
             <div className="w-9 h-9 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
               <Factory className="w-4 h-4 text-indigo-400" />
             </div>
-            <span className="text-xl font-bold">Shapers</span>
+            <span className="text-xl font-bold">Rocco Tools</span>
           </div>
 
           <div className="mb-8">
@@ -182,7 +182,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@shapers.eu"
+                placeholder="name@rocco-tools.eu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -235,7 +235,7 @@ export default function LoginPage() {
           </p>
 
           <p className="mt-8 text-center text-xs text-muted-foreground/50">
-            Shapers Command Center v1.0 · © {new Date().getFullYear()} Shapers
+            Rocco Tools Command Center v1.0 · © {new Date().getFullYear()} Rocco Tools
           </p>
         </div>
       </motion.div>

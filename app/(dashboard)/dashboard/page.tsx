@@ -164,7 +164,7 @@ export default function ExecutiveSummaryPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Executive Summary</h1>
-          <p className="text-sm text-muted-foreground">April 2026 · YTD Jan–Apr · Shapers Polska Sp. z o.o.</p>
+          <p className="text-sm text-muted-foreground">April 2026 · YTD Jan–Apr · Rocco Tools Polska Sp. z o.o.</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />

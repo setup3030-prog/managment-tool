@@ -97,7 +97,7 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Settings className="w-6 h-6 text-indigo-400" /> Settings
           </h1>
-          <p className="text-sm text-muted-foreground">System configuration · Shapers Command Center</p>
+          <p className="text-sm text-muted-foreground">System configuration · Rocco Tools Command Center</p>
         </div>
         <Button onClick={handleSave} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -383,7 +383,7 @@ export default function SettingsPage() {
               <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-3">Delivery Channels</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { label: "Email notifications", desc: "thomas.keller@shapers.eu", enabled: true },
+                  { label: "Email notifications", desc: "thomas.keller@rocco-tools.eu", enabled: true },
                   { label: "In-app notifications", desc: "Bell icon in top bar", enabled: true },
                   { label: "Slack integration", desc: "Not configured", enabled: false },
                 ].map(ch => (

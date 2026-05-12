@@ -35,7 +35,7 @@ export default function RegisterPage() {
           <div className="w-9 h-9 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
             <Factory className="w-4 h-4 text-indigo-400" />
           </div>
-          <span className="text-xl font-bold">Shapers</span>
+          <span className="text-xl font-bold">Rocco Tools</span>
         </div>
 
         <div className="mb-8">
@@ -54,7 +54,7 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <Label>Company</Label>
-            <Input placeholder="Shapers GmbH" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className="h-11" />
+            <Input placeholder="Rocco Tools GmbH" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })} className="h-11" />
           </div>
           <div className="space-y-2">
             <Label>Preferred Password</Label>

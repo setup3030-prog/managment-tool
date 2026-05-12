@@ -11,16 +11,16 @@ import {
 
 // ─── localStorage keys ────────────────────────────────────────────────────────
 const KEYS = {
-  projects:  "shapers_projects",
-  risks:     "shapers_risks",
-  cashflow:  "shapers_cashflow",
-  overrideProjects:  "shapers_override_projects",
-  overrideRisks:     "shapers_override_risks",
-  employees:         "shapers_employees",
-  overrideEmployees: "shapers_override_employees",
-  rfqs:              "shapers_rfqs",
-  overrideRfqs:      "shapers_override_rfqs",
-  deleted:   "shapers_deleted",
+  projects:  "rocco_tools_projects",
+  risks:     "rocco_tools_risks",
+  cashflow:  "rocco_tools_cashflow",
+  overrideProjects:  "rocco_tools_override_projects",
+  overrideRisks:     "rocco_tools_override_risks",
+  employees:         "rocco_tools_employees",
+  overrideEmployees: "rocco_tools_override_employees",
+  rfqs:              "rocco_tools_rfqs",
+  overrideRfqs:      "rocco_tools_override_rfqs",
+  deleted:   "rocco_tools_deleted",
 };
 
 function load<T>(key: string): T[] {

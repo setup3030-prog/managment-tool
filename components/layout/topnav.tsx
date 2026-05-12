@@ -72,7 +72,7 @@ export function TopNav() {
       <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur px-4 lg:px-6">
         {/* Breadcrumb */}
         <nav className="hidden md:flex items-center gap-1.5 text-sm flex-1">
-          <span className="text-muted-foreground">Shapers</span>
+          <span className="text-muted-foreground">Rocco Tools</span>
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1.5">
               <ChevronRight size={13} className="text-muted-foreground/50" />
@@ -124,7 +124,7 @@ export function TopNav() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <p className="font-medium">Bartlomiej Zarski</p>
-                <p className="text-xs text-muted-foreground font-normal">bartlomiej.zarski@shapers.eu</p>
+                <p className="text-xs text-muted-foreground font-normal">bartlomiej.zarski@rocco-tools.eu</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push("/settings")}>Settings</DropdownMenuItem>

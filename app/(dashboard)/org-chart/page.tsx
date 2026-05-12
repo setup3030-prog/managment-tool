@@ -92,7 +92,7 @@ export default function OrgChartPage() {
             <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
               <Users2 className="w-6 h-6 text-indigo-400" /> Org Chart
             </h1>
-            <p className="text-sm text-muted-foreground">Shapers Poland · April 2026</p>
+            <p className="text-sm text-muted-foreground">Rocco Tools Poland · April 2026</p>
           </div>
 
           {/* Stats */}

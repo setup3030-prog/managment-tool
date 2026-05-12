@@ -151,7 +151,7 @@ export function EmployeeForm({ open, onClose, employee }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="E-mail *" error={errors.email?.message}>
-              <Input {...register("email")} type="email" placeholder="jan.kowalski@shapers.pl" className="h-9" />
+              <Input {...register("email")} type="email" placeholder="jan.kowalski@rocco-tools.pl" className="h-9" />
             </Field>
             <Field label="Telefon (opcjonalnie)">
               <Input {...register("phone")} placeholder="+48 600 100 001" className="h-9" />
